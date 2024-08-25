@@ -15,11 +15,10 @@ typedef struct scommand_s {
 scommand scommand_new(void){
     scommand result = malloc(sizeof(struct scommand_s));
     assert(result!= NULL);
-<<<<<<< HEAD
     result->scomman = NULL;
-=======
+
     result->scomman = g_queue_new();
->>>>>>> 4c05bec9451825ebeaadb82c29b37fd0821b011b
+
     result->out = NULL;
     result->in = NULL;
     assert(scommand_is_empty(result) &&  scommand_get_redir_in (result) &&  scommand_get_redir_out (result));
@@ -60,6 +59,11 @@ void scommand_set_redir_out(scommand self, char * filename){
     self->out = filename;
     free(filename);
 }
+//
+bool scommand_is_empty(const scommand self){
+    return (self == NULL);
+}
+//Hasta acá
 
 unsigned int scommand_length(const scommand self){ //si falla es por no  poner guint
     assert(self!=NULL);
@@ -74,16 +78,6 @@ char * scommand_front(const scommand self){
     return fst_elem;
 }
 //
-char * scommand_get_redir_in(const scommand self){
-    assert(self!=NULL);
-    return self.in;
-}
-
-char * scommand_get_redir_out(const scommand self){
-    assert(self!=NULL);
-    return self.out;
-}
-
 char * scommand_get_redir_in(const scommand self){
     assert(self!=NULL);
     return self.in;
@@ -116,6 +110,7 @@ void pipeline_pop_front(pipeline self){
 
 }
 
+
 void pipeline_set_wait(pipeline self, const bool w){
 
 }
@@ -139,5 +134,3 @@ bool pipeline_get_wait(const pipeline self){
 char * pipeline_to_string(const pipeline self){
 
 }
-
-
