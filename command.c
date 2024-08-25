@@ -183,15 +183,22 @@ bool pipeline_is_empty(const pipeline self){
 }
 
 unsigned int pipeline_length(const pipeline self){
-
+    assert(self!=NULL)
+    unsigned int leng = g_queue_get_length(self);
+    return leng;
 }
 
 scommand pipeline_front(const pipeline self){
-
+    assert(self!=NULL && !pipeline_is_empty(self))
+    comands fst_el = g_queue_peek_head(self);
+    assert(fst_el!=NULL);
+    return fst_el;
 }
 
 bool pipeline_get_wait(const pipeline self){
-
+    assert(self!=NULL);
+    bool res = self.wait;
+    return res;
 }
 
 char * pipeline_to_string(const pipeline self){
