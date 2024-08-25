@@ -57,13 +57,10 @@ void scommand_set_redir_out(scommand self, char * filename){
 }
 
 bool scommand_is_empty(const scommand self){
-    return (self == NULL);
+    asser(self != NULL);
+    return (scommand_length(self) == 0);
 }
 
-unsigned int scommand_length(const scommand self){ //si falla es por no  poner guint
-    assert(self!=NULL);
-    unsigned int len = g_queue_get_length(self);
-    return len;
 unsigned int scommand_length(const scommand self){ //si falla es por no  poner guint
     assert(self!=NULL);
     unsigned int len = g_queue_get_length(self);
@@ -92,22 +89,46 @@ char * scommand_get_redir_out(const scommand self){
 }
 
 char * scommand_to_string(const scommand self){
-	GQueue tmp = g_queue_copy(self->comman);
 	char * result = NULL;
-	gpointer aux = NULL;
-	char * killme = NULL;
-	char * killme2 = NULL;
 	char space = ' ';
 	char *sp = &space;
-	aux = g_queue_pop_head(tmp);
-	result = (* char)g_string_new_take((gchar*) aux);
-	while (!g_queue_is_empty(tmp)) {
+	char *mayor = " > ";
+	char *minor = " < ";
+	char * killme = NULL;
+	char * killme2 = NULL;
+	if (!g_queue_is_empty(self->comman)) {
+		GQueue tmp = g_queue_copy(self->comman);
+		gpointer aux = NULL;
 		aux = g_queue_pop_head(tmp);
-		killme2 = result;
-		killme = str_merge(sp, (char *)aux);
-		result = str_merge(result,killme);
-		killme = (* char)g_string_free((* gchar)killme,true);
-		killme2 = (* char)g_string_free((* gchar)killme2,true);
+		result = (* char)g_string_new_take((gchar*) aux);
+		while (!g_queue_is_empty(tmp)) {
+			aux = g_queue_pop_head(tmp);
+			killme2 = result;
+			killme = str_merge(sp, (char *)aux);
+			result = str_merge(result,killme);
+			killme = (* char)g_string_free((* gchar)killme,true);
+			killme2 = (* char)g_string_free((* gchar)killme2,true);
+		}
+	} if (self->out!=NULL) {
+		if (result!=NULL) {
+			killme = str_merge(mayor, self->out);
+			killme2 = result;
+			result = str_merge(result, killme);
+			killme2 = (* char)g_string_free((* gchar)killme2,true);
+			killme = (* char)g_string_free((* gchar)killme,true);
+		} else {
+			result = str_merge(mayor, self->out);
+		}
+	} if (self->in!=NULL) {
+		if (result!=NULL) {
+			killme = str_merge(minor, self->in);
+			killme2 = result;
+			result = str_merge(result, killme);
+			killme2 = (* char)g_string_free((* gchar)killme2,true);
+			killme = (* char)g_string_free((* gchar)killme,true);
+		} else {
+			result = str_merge(minor, self->in);
+		}
 	}
 	return result;
 }
@@ -152,11 +173,13 @@ void pipeline_pop_front(pipeline self){
 
 
 void pipeline_set_wait(pipeline self, const bool w){
-
+    assert(self != NULL);
+    self->wait = w;
 }
 
 bool pipeline_is_empty(const pipeline self){
-
+    assert(self != NULL);
+    return (pipeline_length(self) == 0);
 }
 
 unsigned int pipeline_length(const pipeline self){
