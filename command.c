@@ -13,25 +13,35 @@ typedef struct scommand_s {
 
 
 scommand scommand_new(void){
-    scommand_s result = malloc(sizeof(struct scommand_s));
+    scommand result = malloc(sizeof(struct scommand_s));
     assert(result!= NULL);
-    result.scomman = NULL;
-    result.out = NULL;
-    result.int = NULL;
+    result->scomman = NULL;
+    result->out = NULL;
+    result->in = NULL;
     assert(scommand_is_empty(result) &&  scommand_get_redir_in (result) &&  scommand_get_redir_out (result));
     return result;
 }
 
 scommand scommand_destroy(scommand self){
-
+    assert(self!= NULL);
+    g_queue_free_full(self->scomman, g_free);
+    free(out);
+    free(in);
+    free(self);
+    self = NULL;
+    return self;
 }
 
 void scommand_push_back(scommand self, char * argument){
-
+    assert(self!=NULL && argument!=NULL); 
+    g_queue_push_tail(self->scomman, argument);
+    assert(!scommand_is_empty());
 }
 
 void scommand_pop_front(scommand self){
-
+    assert(self!=NULL && !scommand_is_empty(self));
+    gpointer kill_data =  g_queue_pop_head(self->scomman);
+    g_free(kill_data);
 }
 
 void scommand_set_redir_in(scommand self, char * filename){
@@ -56,16 +66,19 @@ char * scommand_front(const scommand self){
 }
 
 char * scommand_get_redir_in(const scommand self){
-
+    assert(self!=NULL);
+    return self.in;
 }
 
 char * scommand_get_redir_out(const scommand self){
-
+    assert(self!=NULL);
+    return self.out;
 }
 
 char * scommand_to_string(const scommand self){
 
 }
+
 
 pipeline pipeline_new(void){
 
