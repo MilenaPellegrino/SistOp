@@ -86,22 +86,46 @@ char * scommand_get_redir_out(const scommand self){
 }
 
 char * scommand_to_string(const scommand self){
-	GQueue tmp = g_queue_copy(self->comman);
 	char * result = NULL;
-	gpointer aux = NULL;
-	char * killme = NULL;
-	char * killme2 = NULL;
 	char space = ' ';
 	char *sp = &space;
-	aux = g_queue_pop_head(tmp);
-	result = (* char)g_string_new_take((gchar*) aux);
-	while (!g_queue_is_empty(tmp)) {
+	char *mayor = " > ";
+	char *minor = " < ";
+	char * killme = NULL;
+	char * killme2 = NULL;
+	if (!g_queue_is_empty(self->comman)) {
+		GQueue tmp = g_queue_copy(self->comman);
+		gpointer aux = NULL;
 		aux = g_queue_pop_head(tmp);
-		killme2 = result;
-		killme = str_merge(sp, (char *)aux);
-		result = str_merge(result,killme);
-		killme = (* char)g_string_free((* gchar)killme,true);
-		killme2 = (* char)g_string_free((* gchar)killme2,true);
+		result = (* char)g_string_new_take((gchar*) aux);
+		while (!g_queue_is_empty(tmp)) {
+			aux = g_queue_pop_head(tmp);
+			killme2 = result;
+			killme = str_merge(sp, (char *)aux);
+			result = str_merge(result,killme);
+			killme = (* char)g_string_free((* gchar)killme,true);
+			killme2 = (* char)g_string_free((* gchar)killme2,true);
+		}
+	} if (self->out!=NULL) {
+		if (result!=NULL) {
+			killme = str_merge(mayor, self->out);
+			killme2 = result;
+			result = str_merge(result, killme);
+			killme2 = (* char)g_string_free((* gchar)killme2,true);
+			killme = (* char)g_string_free((* gchar)killme,true);
+		} else {
+			result = str_merge(mayor, self->out);
+		}
+	} if (self->in!=NULL) {
+		if (result!=NULL) {
+			killme = str_merge(minor, self->in);
+			killme2 = result;
+			result = str_merge(result, killme);
+			killme2 = (* char)g_string_free((* gchar)killme2,true);
+			killme = (* char)g_string_free((* gchar)killme,true);
+		} else {
+			result = str_merge(minor, self->in);
+		}
 	}
 	return result;
 }
