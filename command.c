@@ -13,11 +13,11 @@ typedef struct scommand_s {
 
 
 scommand scommand_new(void){
-    scommand_s result = malloc(sizeof(struct scommand_s));
+    scommand result = malloc(sizeof(struct scommand_s));
     assert(result!= NULL);
-    result.scomman = NULL;
-    result.out = NULL;
-    result.int = NULL;
+    result->scomman = NULL;
+    result->out = NULL;
+    result->in = NULL;
     assert(scommand_is_empty(result) &&  scommand_get_redir_in (result) &&  scommand_get_redir_out (result));
     return result;
 }
@@ -64,7 +64,24 @@ char * scommand_get_redir_out(const scommand self){
 }
 
 char * scommand_to_string(const scommand self){
-
+	Glist tmp = g_list_copy_deep(g_queue_peek_head(self->comman));
+	char * result = NULL;
+	gpointer aux = NULL;
+	char * killme = NULL;
+	char * killme2 = NULL;
+	char space = ' ';
+	char *sp = &space;
+	aux = g_list_first(tmp);
+	result = (char *) aux;
+	tmp = g_list_remove(tmp,aux);
+	while (!g_list_is_empty(tmp)) {
+		aux = g_list_first(tmp);
+		killme2 = result;
+		killme = str_merge(sp, (char *)aux);
+		result = str_merge(result,killme);
+		tmp = g_list_remove(tmp,aux);
+	}
+	return result;
 }
 
 pipeline pipeline_new(void){
