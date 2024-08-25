@@ -61,18 +61,27 @@ void scommand_set_redir_out(scommand self, char * filename){
     free(filename);
 }
 
-bool scommand_is_empty(const scommand self){
-    return (self == NULL);
-}
-//Hasta acá
-
-unsigned int scommand_length(const scommand self){
-
-
+unsigned int scommand_length(const scommand self){ //si falla es por no  poner guint
+    assert(self!=NULL);
+    unsigned int len = g_queue_get_length(self);
+    return len;
 }
 
 char * scommand_front(const scommand self){
+    assert(self!=NULL && !scommand_is_empty(self));
+    char * fst_elem = g_queue_peek_head(self);
+    assert(fst_elem!=NULL);
+    return fst_elem;
+}
+//
+char * scommand_get_redir_in(const scommand self){
+    assert(self!=NULL);
+    return self.in;
+}
 
+char * scommand_get_redir_out(const scommand self){
+    assert(self!=NULL);
+    return self.out;
 }
 
 char * scommand_get_redir_in(const scommand self){
