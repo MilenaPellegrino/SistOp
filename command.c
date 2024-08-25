@@ -188,5 +188,30 @@ bool pipeline_get_wait(const pipeline self){
 }
 
 char * pipeline_to_string(const pipeline self){
-
+	char * result = NULL;
+	char * killme = NULL;
+	char * killme2 = NULL;
+	char * amper = " && ";
+	char * pipe = " | ";
+	if (!g_queue_is_empty(self->commands)) {
+		GQueue tmp = g_queue_copy(self->commands);
+		gpointer aux = NULL;
+		aux = g_queue_pop_head(tmp);
+		result = scommand_to_string(aux);
+		while (!g_queue_is_empty(aux)) {
+			aux = g_queue_pop_head(tmp);
+			killme = scommand_to_string(aux);
+			if (self->wait==true) {
+				killme2 = str_merge(amper, killme);
+			} else {
+				killme2 = str_merge(pipe, killme);	
+			}
+			killme = (* char)g_string_free((* gchar)killme,true);
+			killme = result;
+			result = str_merge(result,killme2);
+			killme = (* char)g_string_free((* gchar)killme,true);
+			killme2 = (* char)g_string_free((* gchar)killme2,true);
+		}
+	}
+	return result;
 }
