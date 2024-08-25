@@ -68,10 +68,6 @@ unsigned int scommand_length(const scommand self){ //si falla es por no  poner g
     assert(self!=NULL);
     unsigned int len = g_queue_get_length(self);
     return len;
-unsigned int scommand_length(const scommand self){ //si falla es por no  poner guint
-    assert(self!=NULL);
-    unsigned int len = g_queue_get_length(self);
-    return len;
 }
 
 char * scommand_front(const scommand self){
