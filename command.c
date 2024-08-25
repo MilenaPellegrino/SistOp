@@ -58,7 +58,8 @@ void scommand_set_redir_out(scommand self, char * filename){
 }
 //
 bool scommand_is_empty(const scommand self){
-    return (self == NULL);
+    asser(self != NULL);
+    return (scommand_length(self) == 0);
 }
 //Hasta acá
 
@@ -126,11 +127,13 @@ void pipeline_pop_front(pipeline self){
 
 
 void pipeline_set_wait(pipeline self, const bool w){
-
+    assert(self != NULL);
+    self->wait = w;
 }
 
 bool pipeline_is_empty(const pipeline self){
-
+    assert(self != NULL);
+    return (pipeline_length(self) == 0);
 }
 
 unsigned int pipeline_length(const pipeline self){
