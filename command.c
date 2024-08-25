@@ -86,22 +86,22 @@ char * scommand_get_redir_out(const scommand self){
 }
 
 char * scommand_to_string(const scommand self){
-	Glist tmp = g_list_copy_deep(g_queue_peek_head(self->comman));
+	GQueue tmp = g_queue_copy(self->comman);
 	char * result = NULL;
 	gpointer aux = NULL;
 	char * killme = NULL;
 	char * killme2 = NULL;
 	char space = ' ';
 	char *sp = &space;
-	aux = g_list_first(tmp);
-	result = (char *) aux;
-	tmp = g_list_remove(tmp,aux);
-	while (!g_list_is_empty(tmp)) {
-		aux = g_list_first(tmp);
+	aux = g_queue_pop_head(tmp);
+	result = (* char)g_string_new_take((gchar*) aux);
+	while (!g_queue_is_empty(tmp)) {
+		aux = g_queue_pop_head(tmp);
 		killme2 = result;
 		killme = str_merge(sp, (char *)aux);
 		result = str_merge(result,killme);
-		tmp = g_list_remove(tmp,aux);
+		killme = (* char)g_string_free((* gchar)killme,true);
+		killme2 = (* char)g_string_free((* gchar)killme2,true);
 	}
 	return result;
 }
