@@ -57,12 +57,17 @@ void scommand_set_redir_out(scommand self, char * filename){
     free(filename);
 }
 //
+//
 bool scommand_is_empty(const scommand self){
     asser(self != NULL);
     return (scommand_length(self) == 0);
 }
 //Hasta acá
 
+unsigned int scommand_length(const scommand self){ //si falla es por no  poner guint
+    assert(self!=NULL);
+    unsigned int len = g_queue_get_length(self);
+    return len;
 unsigned int scommand_length(const scommand self){ //si falla es por no  poner guint
     assert(self!=NULL);
     unsigned int len = g_queue_get_length(self);
@@ -74,7 +79,12 @@ char * scommand_front(const scommand self){
     char * fst_elem = g_queue_peek_head(self);
     assert(fst_elem!=NULL);
     return fst_elem;
+    assert(self!=NULL && !scommand_is_empty(self));
+    char * fst_elem = g_queue_peek_head(self);
+    assert(fst_elem!=NULL);
+    return fst_elem;
 }
+//
 //
 char * scommand_get_redir_in(const scommand self){
     assert(self!=NULL);
@@ -107,14 +117,23 @@ char * scommand_to_string(const scommand self){
 	return result;
 }
 
+struct pipeline_s{
+    GQueue *commands;
+    bool wait;
+}
 
 pipeline pipeline_new(void){
-
-
+    pipeline result = malloc(sizeof(struct pipeline_s));
+    result->commands = g_queue_new();
+    result->true;
+    assert(result != NULL && pipeline_is_empty(result) && pipeline_get_wait(result));
+    return result;
 }
 
 pipeline pipeline_destroy(pipeline self){
-
+    assert(self != NULL);
+    //GQueue *commands
+    assert(result !=NULL);
 }
 
 void pipeline_push_back(pipeline self, scommand sc){
