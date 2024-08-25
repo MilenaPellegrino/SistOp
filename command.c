@@ -15,11 +15,7 @@ typedef struct scommand_s {
 scommand scommand_new(void){
     scommand result = malloc(sizeof(struct scommand_s));
     assert(result!= NULL);
-<<<<<<< HEAD
-    result->scomman = NULL;
-=======
     result->scomman = g_queue_new();
->>>>>>> 4c05bec9451825ebeaadb82c29b37fd0821b011b
     result->out = NULL;
     result->in = NULL;
     assert(scommand_is_empty(result) &&  scommand_get_redir_in (result) &&  scommand_get_redir_out (result));
@@ -60,21 +56,25 @@ void scommand_set_redir_out(scommand self, char * filename){
     self->out = filename;
     free(filename);
 }
-
+//
 bool scommand_is_empty(const scommand self){
     return (self == NULL);
 }
 //Hasta acá
 
-unsigned int scommand_length(const scommand self){
-
-
+unsigned int scommand_length(const scommand self){ //si falla es por no  poner guint
+    assert(self!=NULL);
+    unsigned int len = g_queue_get_length(self);
+    return len;
 }
 
 char * scommand_front(const scommand self){
-
+    assert(self!=NULL && !scommand_is_empty(self));
+    char * fst_elem = g_queue_peek_head(self);
+    assert(fst_elem!=NULL);
+    return fst_elem;
 }
-
+//
 char * scommand_get_redir_in(const scommand self){
     assert(self!=NULL);
     return self.in;
@@ -86,17 +86,43 @@ char * scommand_get_redir_out(const scommand self){
 }
 
 char * scommand_to_string(const scommand self){
-
+	GQueue tmp = g_queue_copy(self->comman);
+	char * result = NULL;
+	gpointer aux = NULL;
+	char * killme = NULL;
+	char * killme2 = NULL;
+	char space = ' ';
+	char *sp = &space;
+	aux = g_queue_pop_head(tmp);
+	result = (* char)g_string_new_take((gchar*) aux);
+	while (!g_queue_is_empty(tmp)) {
+		aux = g_queue_pop_head(tmp);
+		killme2 = result;
+		killme = str_merge(sp, (char *)aux);
+		result = str_merge(result,killme);
+		killme = (* char)g_string_free((* gchar)killme,true);
+		killme2 = (* char)g_string_free((* gchar)killme2,true);
+	}
+	return result;
 }
 
+struct pipeline_s{
+    GQueue *commands;
+    bool wait;
+}
 
 pipeline pipeline_new(void){
-
-
+    pipeline result = malloc(sizeof(struct pipeline_s));
+    result->commands = g_queue_new();
+    result->true;
+    assert(result != NULL && pipeline_is_empty(result) && pipeline_get_wait(result));
+    return result;
 }
 
 pipeline pipeline_destroy(pipeline self){
-
+    assert(self != NULL);
+    //GQueue *commands
+    assert(result !=NULL);
 }
 
 void pipeline_push_back(pipeline self, scommand sc){
@@ -130,5 +156,3 @@ bool pipeline_get_wait(const pipeline self){
 char * pipeline_to_string(const pipeline self){
 
 }
-
-
