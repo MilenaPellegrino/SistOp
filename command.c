@@ -44,7 +44,6 @@ void scommand_pop_front(scommand self){
     g_free(kill_data);
 }
 
-//JUANCHO
 void scommand_set_redir_in(scommand self, char * filename){
     assert(self != NULL);
     self->in = filename;
@@ -56,13 +55,11 @@ void scommand_set_redir_out(scommand self, char * filename){
     self->out = filename;
     free(filename);
 }
-//
-//
+
 bool scommand_is_empty(const scommand self){
     asser(self != NULL);
     return (scommand_length(self) == 0);
 }
-//Hasta acá
 
 unsigned int scommand_length(const scommand self){ //si falla es por no  poner guint
     assert(self!=NULL);
@@ -80,8 +77,7 @@ char * scommand_front(const scommand self){
     assert(fst_elem!=NULL);
     return fst_elem;
 }
-//
-//
+
 char * scommand_get_redir_in(const scommand self){
     assert(self!=NULL);
     return self.in;
@@ -150,18 +146,29 @@ pipeline pipeline_new(void){
     return result;
 }
 
-pipeline pipeline_destroy(pipeline self){
+pipeline pipeline_destroy(pipeline self){  // MUy propicio a errores
     assert(self != NULL);
-    //GQueue *commands
+    GQueue *coms = self->commands;
+    while(g_queue_get_length(self)){
+        GQueue *kill_command = coms;
+        scommand_destroy(g_queue_pop_head(coms));
+        g_queue_free_full(coms, kill_command);
+    }
     assert(result !=NULL);
+    free(self);
+    return NULL;
 }
 
 void pipeline_push_back(pipeline self, scommand sc){
-
+    assert(self!=NULL && sc!=NULL);
+    g_queue_push_tail(self->commands, sc);
+    assert(!pipeline_is_empty());
 }
 
 void pipeline_pop_front(pipeline self){
-
+    assert(self!=NULL && !pipeline_is_empty(self));
+    gpointer kill_data =  g_queue_pop_head(self->commands);
+    g_free(kill_data);
 }
 
 
