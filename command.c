@@ -15,7 +15,11 @@ typedef struct scommand_s {
 scommand scommand_new(void){
     scommand result = malloc(sizeof(struct scommand_s));
     assert(result!= NULL);
+<<<<<<< HEAD
     result->scomman = NULL;
+=======
+    result->scomman = g_queue_new();
+>>>>>>> 4c05bec9451825ebeaadb82c29b37fd0821b011b
     result->out = NULL;
     result->in = NULL;
     assert(scommand_is_empty(result) &&  scommand_get_redir_in (result) &&  scommand_get_redir_out (result));
@@ -44,17 +48,23 @@ void scommand_pop_front(scommand self){
     g_free(kill_data);
 }
 
+//JUANCHO
 void scommand_set_redir_in(scommand self, char * filename){
-
+    assert(self != NULL);
+    self->in = filename;
+    free(filename);
 }
 
 void scommand_set_redir_out(scommand self, char * filename){
-
+    assert(self != NULL);
+    self->out = filename;
+    free(filename);
 }
 
 bool scommand_is_empty(const scommand self){
-
+    return (self == NULL);
 }
+//Hasta acá
 
 unsigned int scommand_length(const scommand self){
 
