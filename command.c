@@ -89,6 +89,7 @@ char * scommand_get_redir_out(const scommand self){
 }
 
 char * scommand_to_string(const scommand self){
+    assert(self != NULL);
 	char *result = NULL;
 	char space = ' ';
 	char *sp = &space;
