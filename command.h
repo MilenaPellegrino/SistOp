@@ -1,3 +1,4 @@
+
 /* A partir de man bash, en su sección de SHELL GRAMMAR,
  * se diseñaron dos TAD scommand (comando simple) y
  * pipeline (secuencia de comandos simples separados por
