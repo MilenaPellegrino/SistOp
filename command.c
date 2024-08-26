@@ -1,9 +1,9 @@
 #include <stdio.h>
 #include <stdlib.h>
+#include <assert.h>
 #include <glib.h>
 #include "strextra.h"
 #include "command.h"
-#include <assert.h>
 
 struct scommand_s {
     GQueue* scomman;
