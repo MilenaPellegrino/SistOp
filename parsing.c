@@ -10,16 +10,13 @@
 //const char * comands[5]={"ls", "exit", "wc", "help", "cd"};
 
 static scommand parse_scommand(Parser p) {
-    /* Devuelve NULL cuando hay un error de parseo */
     scommand result = scommand_new();
     char *pointer = NULL;
     arg_kind_t type;
-    bool res1 = false;
-    bool res2 = false;
-    while (!res1 && !res2) {
-        parser_skip_blanks(p);
-        pointer = parser_next_argument(p, &type);
-        if (type == ARG_NORMAL){
+    parser_skip_blanks(p);
+    pointer = parser_next_argument(p, &type);
+    while (pointer != NULL) {
+		if (type == ARG_NORMAL){
         scommand_push_back(result, pointer);
     }
         else if (type == ARG_INPUT){
@@ -29,45 +26,51 @@ static scommand parse_scommand(Parser p) {
             scommand_set_redir_out(result, pointer);
     }
         else {
-            printf("orden no encontrada");
+            printf("Orden no encontrada.\n");
             result = scommand_destroy(result);
         }
-        parser_op_pipe(p, &res1);
-        parser_op_background(p, &res2);
-
         free(pointer);
         pointer = NULL;
+    	parser_skip_blanks(p);
+    	pointer = parser_next_argument(p, &type);
     }
-    
+    if (scommand_is_empty(result)) {
+		result = scommand_destroy(result);
+	}
     return result;
 }
 
 pipeline parse_pipeline(Parser p) {
     assert(p!=NULL && !parser_at_eof(p));
-
     pipeline result = pipeline_new();
     scommand cmd = NULL;
     bool error = false, another_pipe=true;
-
-    cmd = parse_scommand(p);
-    error = (cmd==NULL); /* Comando inválido al empezar */
-    while (another_pipe && !error) {
-        /*
-         * COMPLETAR
-         *
-         */
+	bool res1 = false;
+	bool res2 = false;
+    bool garbage = false;
+	char * garb= NULL;
+	while (another_pipe && !error) {
+		cmd = parse_scommand(p);
+    	error = (cmd==NULL);
+    	if (!error) {
+			pipeline_push_back(result,cmd);
+		} 
+    	parser_op_pipe(p, &another_pipe);
+    	parser_op_background(p, &res1);
+    	parser_op_background(p, &res2);
+		another_pipe = another_pipe || (res1 && res2);
     }
-    /* Opcionalmente un OP_BACKGROUND al final */
-    /*
-     *
-     * COMPLETAR
-     *
-     */
-
-    /* Tolerancia a espacios posteriores */
-    /* Consumir todo lo que hay inclusive el \n */
-    /* Si hubo error, hacemos cleanup */
-
-    return NULL; // MODIFICAR
+	pipeline_set_wait(result,res1 && !res2);
+	parser_garbage(p,&garbage);
+	garb = parser_last_garbage(p);
+	if (garbage) {
+		if (sizeof(garb)!=sizeof(char)) {
+			printf("Error, los caracteres <%s> estan de mas.\n", garb);
+		} else {
+			printf("Error, el caracter <%s> esta de mas.\n", garb);
+		}
+		result = pipeline_destroy(result);
+	}
+	p = parser_destroy(p);
+    return result;
 }
-

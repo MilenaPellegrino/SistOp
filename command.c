@@ -18,7 +18,9 @@ scommand scommand_new(void){
     result->scomman = g_queue_new();
     result->out = NULL;
     result->in = NULL;
-    assert(scommand_is_empty(result) &&  scommand_get_redir_in (result) &&  scommand_get_redir_out (result));
+    assert(scommand_is_empty(result) 
+		   &&  scommand_get_redir_in(result)==NULL 
+		   &&  scommand_get_redir_out (result)==NULL);
     return result;
 }
 
