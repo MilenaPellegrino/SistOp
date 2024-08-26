@@ -2,14 +2,14 @@
 #include <stdlib.h>
 #include <glib.h>
 #include "strextra.h"
-
 #include "command.h"
+#include <assert.h>
 
-typedef struct scommand_s {
-    GQueue scomman;
+struct scommand_s {
+    GQueue* scomman;
     char* out;
     char* in;
-}
+};
 
 
 scommand scommand_new(void){
@@ -22,11 +22,12 @@ scommand scommand_new(void){
     return result;
 }
 
+
 scommand scommand_destroy(scommand self){
     assert(self!= NULL);
     g_queue_free_full(self->scomman, g_free);
-    free(out);
-    free(in);
+    free(self->out);
+    free(self->in);
     free(self);
     self = NULL;
     return self;
@@ -35,7 +36,7 @@ scommand scommand_destroy(scommand self){
 void scommand_push_back(scommand self, char * argument){
     assert(self!=NULL && argument!=NULL); 
     g_queue_push_tail(self->scomman, argument);
-    assert(!scommand_is_empty());
+    assert(!scommand_is_empty(self));
 }
 
 void scommand_pop_front(scommand self){
@@ -57,77 +58,81 @@ void scommand_set_redir_out(scommand self, char * filename){
 }
 
 bool scommand_is_empty(const scommand self){
-    asser(self != NULL);
+    assert(self != NULL);
     return (scommand_length(self) == 0);
 }
 
 unsigned int scommand_length(const scommand self){ //si falla es por no  poner guint
     assert(self!=NULL);
-    unsigned int len = g_queue_get_length(self);
+    unsigned int len = g_queue_get_length(self->scomman);
     return len;
 }
 
 char * scommand_front(const scommand self){
     assert(self!=NULL && !scommand_is_empty(self));
-    char * fst_elem = g_queue_peek_head(self);
-    assert(fst_elem!=NULL);
-    return fst_elem;
-    assert(self!=NULL && !scommand_is_empty(self));
-    char * fst_elem = g_queue_peek_head(self);
+    char * fst_elem = g_queue_peek_head(self->scomman);
     assert(fst_elem!=NULL);
     return fst_elem;
 }
 
 char * scommand_get_redir_in(const scommand self){
     assert(self!=NULL);
-    return self.in;
+    return self->in;
 }
 
 char * scommand_get_redir_out(const scommand self){
     assert(self!=NULL);
-    return self.out;
+    return self->out;
 }
 
 char * scommand_to_string(const scommand self){
-	char * result = NULL;
+	char *result = NULL;
 	char space = ' ';
 	char *sp = &space;
 	char *mayor = " > ";
 	char *minor = " < ";
-	char * killme = NULL;
-	char * killme2 = NULL;
-	if (!g_queue_is_empty(self->comman)) {
-		GQueue tmp = g_queue_copy(self->comman);
+	char *killme = NULL;
+	char *killme2 = NULL;
+
+	if (!g_queue_is_empty(self->scomman)) {
+		GQueue *tmp = g_queue_copy(self->scomman);
 		gpointer aux = NULL;
+
 		aux = g_queue_pop_head(tmp);
-		result = (* char)g_string_new_take((gchar*) aux);
+		GString *gstr = g_string_new_take((gchar *)aux);
+        result = gstr->str;
+
 		while (!g_queue_is_empty(tmp)) {
 			aux = g_queue_pop_head(tmp);
 			killme2 = result;
-			killme = str_merge(sp, (char *)aux);
-			result = str_merge(result,killme);
-			killme = (* char)g_string_free((* gchar)killme,true);
-			killme2 = (* char)g_string_free((* gchar)killme2,true);
+			killme = strmerge(sp, (char *)aux);
+			result = strmerge(result,killme);
+            g_free(killme);
+            g_free(killme2);
 		}
+        g_string_free(gstr, TRUE);
+        g_queue_free(tmp);
+
 	} if (self->out!=NULL) {
 		if (result!=NULL) {
-			killme = str_merge(mayor, self->out);
+			killme = strmerge(mayor, self->out);
 			killme2 = result;
-			result = str_merge(result, killme);
-			killme2 = (* char)g_string_free((* gchar)killme2,true);
-			killme = (* char)g_string_free((* gchar)killme,true);
+			result = strmerge(result, killme);
+            g_free(killme);
+            g_free(killme2);
 		} else {
-			result = str_merge(mayor, self->out);
+			result = strmerge(mayor, self->out);
 		}
+
 	} if (self->in!=NULL) {
 		if (result!=NULL) {
-			killme = str_merge(minor, self->in);
+			killme = strmerge(minor, self->in);
 			killme2 = result;
-			result = str_merge(result, killme);
-			killme2 = (* char)g_string_free((* gchar)killme2,true);
-			killme = (* char)g_string_free((* gchar)killme,true);
+			result = strmerge(result, killme);
+            g_free(killme);
+            g_free(killme2);
 		} else {
-			result = str_merge(minor, self->in);
+			result = strmerge(minor, self->in);
 		}
 	}
 	return result;
@@ -136,25 +141,23 @@ char * scommand_to_string(const scommand self){
 struct pipeline_s{
     GQueue *commands;
     bool wait;
-}
+};
 
 pipeline pipeline_new(void){
     pipeline result = malloc(sizeof(struct pipeline_s));
     result->commands = g_queue_new();
-    result->true;
+    result->wait = true;
     assert(result != NULL && pipeline_is_empty(result) && pipeline_get_wait(result));
     return result;
 }
 
-pipeline pipeline_destroy(pipeline self){  // MUy propicio a errores
+pipeline pipeline_destroy(pipeline self){ 
     assert(self != NULL);
     GQueue *coms = self->commands;
-    while(g_queue_get_length(self)){
-        GQueue *kill_command = coms;
+    while (!g_queue_is_empty(coms)) {
         scommand_destroy(g_queue_pop_head(coms));
-        g_queue_free_full(coms, kill_command);
     }
-    assert(result !=NULL);
+    g_queue_free(coms);
     free(self);
     return NULL;
 }
@@ -162,7 +165,7 @@ pipeline pipeline_destroy(pipeline self){  // MUy propicio a errores
 void pipeline_push_back(pipeline self, scommand sc){
     assert(self!=NULL && sc!=NULL);
     g_queue_push_tail(self->commands, sc);
-    assert(!pipeline_is_empty());
+    assert(!pipeline_is_empty(self));
 }
 
 void pipeline_pop_front(pipeline self){
@@ -183,17 +186,55 @@ bool pipeline_is_empty(const pipeline self){
 }
 
 unsigned int pipeline_length(const pipeline self){
-
+    assert(self!=NULL);
+    unsigned int leng = g_queue_get_length(self->commands);
+    return leng;
 }
 
 scommand pipeline_front(const pipeline self){
-
+    assert(self!=NULL && !pipeline_is_empty(self));
+    scommand fst_el = g_queue_peek_head(self->commands);
+    assert(fst_el!=NULL);
+    return fst_el;
 }
 
 bool pipeline_get_wait(const pipeline self){
-
+    assert(self!=NULL);
+    bool res = self->wait;
+    return res;
 }
 
 char * pipeline_to_string(const pipeline self){
+	char *result = NULL;
+	char *killme = NULL;
+	char *killme2 = NULL;
+	char *amper = " && ";
+	char *pipe = " | ";
 
+	if (!g_queue_is_empty(self->commands)) {
+		GQueue *tmp = g_queue_copy(self->commands);
+		gpointer aux = NULL;
+
+		aux = g_queue_pop_head(tmp);
+		result = scommand_to_string((scommand)aux);
+
+		while (!g_queue_is_empty(aux)) {
+			aux = g_queue_pop_head(tmp);
+			killme = scommand_to_string((scommand)aux);
+
+			if (self->wait==true) {
+				killme2 = strmerge(amper, killme);
+			} else {
+				killme2 = strmerge(pipe, killme);	
+			}
+
+            g_free(result);
+            result = strmerge(result, killme2);
+            g_free(killme);
+            g_free(killme2);
+		}
+        g_queue_free(tmp);
+	}
+	return result;
 }
+
