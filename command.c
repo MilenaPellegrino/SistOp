@@ -204,6 +204,7 @@ bool pipeline_get_wait(const pipeline self){
 }
 
 char * pipeline_to_string(const pipeline self){
+    assert(self!=NULL);
 	char *result = NULL;
 	char *killme = NULL;
 	char *killme2 = NULL;
@@ -234,6 +235,7 @@ char * pipeline_to_string(const pipeline self){
 		}
         g_queue_free(tmp);
 	}
-	return result;
+	assert(pipeline_is_empty(self) || pipeline_get_wait(self) || strlen(result)>0);
+    return result;
 }
 
