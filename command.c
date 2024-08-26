@@ -2,6 +2,7 @@
 #include <stdlib.h>
 #include <assert.h>
 #include <glib.h>
+#include <string.h>
 #include "strextra.h"
 #include "command.h"
 
@@ -99,20 +100,16 @@ char * scommand_to_string(const scommand self){
 	if (!g_queue_is_empty(self->scomman)) {
 		GQueue *tmp = g_queue_copy(self->scomman);
 		gpointer aux = NULL;
-
 		aux = g_queue_pop_head(tmp);
-		GString *gstr = g_string_new_take((gchar *)aux);
-        result = gstr->str;
-
+        result = strcpy(result, (char *)aux);
 		while (!g_queue_is_empty(tmp)) {
 			aux = g_queue_pop_head(tmp);
 			killme2 = result;
 			killme = strmerge(sp, (char *)aux);
-			result = strmerge(result,killme);
+			result = strmerge(result, killme);
             g_free(killme);
             g_free(killme2);
 		}
-        g_string_free(gstr, TRUE);
         g_queue_free(tmp);
 
 	} if (self->out!=NULL) {
