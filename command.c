@@ -229,13 +229,17 @@ char * pipeline_to_string(const pipeline self){
 				killme2 = strmerge(pipe, killme);	
 			}
 
-            g_free(result);
+            killme = result;
             result = strmerge(result, killme2);
             g_free(killme);
             g_free(killme2);
 		}
         g_queue_free(tmp);
 	}
+    else{
+        result = malloc(1);
+		result[0] = '\0';
+    }
 	assert(pipeline_is_empty(self) || pipeline_get_wait(self) || strlen(result)>0);
     return result;
 }
