@@ -1,6 +1,7 @@
 #include <stdlib.h>    /* calloc()...                        */
 #include <string.h>    /* strlen(), strncat, strcopy()...    */
 #include <assert.h>    /* assert()...                        */
+#include <stdio.h>
 #include "strextra.h"  /* Interfaz                           */
 
 char * strmerge(char *s1, char *s2) {
