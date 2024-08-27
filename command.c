@@ -49,12 +49,20 @@ void scommand_pop_front(scommand self){
 }
 
 void scommand_set_redir_in(scommand self, char * filename){
-    assert(self != NULL && self->in == NULL);
+    assert(self != NULL);
+	if (self->in!=NULL) {
+		free(self->in);
+		self->in=NULL;
+	}
     self->in = filename;
 }
 
 void scommand_set_redir_out(scommand self, char * filename){
-    assert(self != NULL && self->out == NULL);
+    assert(self != NULL);
+	if (self->out!=NULL) {
+		free(self->out);
+		self->out=NULL;
+	}
     self->out = filename;
 }
 
