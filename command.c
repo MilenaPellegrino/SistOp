@@ -51,13 +51,11 @@ void scommand_pop_front(scommand self){
 void scommand_set_redir_in(scommand self, char * filename){
     assert(self != NULL);
     self->in = filename;
-    free(filename);
 }
 
 void scommand_set_redir_out(scommand self, char * filename){
     assert(self != NULL);
     self->out = filename;
-    free(filename);
 }
 
 bool scommand_is_empty(const scommand self){
@@ -91,28 +89,26 @@ char * scommand_get_redir_out(const scommand self){
 char * scommand_to_string(const scommand self){
     assert(self != NULL);
 	char *result = NULL;
-	char space = ' ';
-	char *sp = &space;
+	char *space = " ";
 	char *mayor = " > ";
 	char *minor = " < ";
 	char *killme = NULL;
 	char *killme2 = NULL;
-
 	if (!g_queue_is_empty(self->scomman)) {
 		GQueue *tmp = g_queue_copy(self->scomman);
 		gpointer aux = NULL;
 		aux = g_queue_pop_head(tmp);
-        result = strcpy(result, (char *)aux);
+        result = malloc(strlen((char *)aux)+1);
+		result = strcpy(result,(char *)aux);
 		while (!g_queue_is_empty(tmp)) {
 			aux = g_queue_pop_head(tmp);
 			killme2 = result;
-			killme = strmerge(sp, (char *)aux);
+			killme = strmerge(space, (char *)aux);
 			result = strmerge(result, killme);
             g_free(killme);
             g_free(killme2);
 		}
         g_queue_free(tmp);
-
 	} if (self->out!=NULL) {
 		if (result!=NULL) {
 			killme = strmerge(mayor, self->out);
@@ -123,7 +119,6 @@ char * scommand_to_string(const scommand self){
 		} else {
 			result = strmerge(mayor, self->out);
 		}
-
 	} if (self->in!=NULL) {
 		if (result!=NULL) {
 			killme = strmerge(minor, self->in);
@@ -134,7 +129,13 @@ char * scommand_to_string(const scommand self){
 		} else {
 			result = strmerge(minor, self->in);
 		}
+	} else {
+		result = malloc(sizeof(char));
+		result[0] = '\0';
 	}
+    assert(scommand_get_redir_in(self)==NULL 
+		   || scommand_get_redir_out(self)==NULL 
+		   ||strlen(result)>0);
 	return result;
 }
 
@@ -211,7 +212,6 @@ char * pipeline_to_string(const pipeline self){
 	char *killme2 = NULL;
 	char *amper = " && ";
 	char *pipe = " | ";
-
 	if (!g_queue_is_empty(self->commands)) {
 		GQueue *tmp = g_queue_copy(self->commands);
 		gpointer aux = NULL;
