@@ -33,6 +33,7 @@ scommand scommand_destroy(scommand self){
     free(self->in);
     free(self);
     self = NULL;
+    
     return self;
 }
 
