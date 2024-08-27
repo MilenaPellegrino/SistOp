@@ -9,6 +9,8 @@
 //ls, exit, wc, help y cd
 //const char * comands[5]={"ls", "exit", "wc", "help", "cd"};
 
+
+//CREO QUE EL ERROR ESTÁ EN QUE TENEMOS QUE PARSEAR CON COMANDOS REALES
 static scommand parse_scommand(Parser p) {
     scommand result = scommand_new();
     char *arg = NULL;
@@ -61,12 +63,8 @@ pipeline parse_pipeline(Parser p) {
 	parser_garbage(p,&garbage);
 	garb = parser_last_garbage(p);
 	if (garbage) {
-		if (sizeof(garb)!=sizeof(char)) {
-			printf("Error, los caracteres <%s> estan de mas.\n", garb);
-		} else {
-			printf("Error, el caracter <%s> esta de mas.\n", garb);
-		}
 		result = pipeline_destroy(result);
+        printf("%s", garb);
 	}
 	p = parser_destroy(p);
     return result;
