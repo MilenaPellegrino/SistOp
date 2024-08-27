@@ -80,7 +80,7 @@ unsigned int scommand_length(const scommand self){ //si falla es por no  poner g
 
 char * scommand_front(const scommand self){
     assert(self!=NULL && !scommand_is_empty(self));
-    char * fst_elem = g_queue_peek_head(self->scomman);
+    char * fst_elem = (char *)g_queue_peek_head(self->scomman);
     assert(fst_elem!=NULL);
     return fst_elem;
 }
