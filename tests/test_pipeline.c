@@ -246,6 +246,7 @@ START_TEST (test_to_string)
         i++;
     }
     ck_assert_msg (n==MAX_LENGTH-1, NULL);
+    printf("----------------------%d----------------------", n);
     ck_assert_msg (n < 2 || strchr(strrchr(str, '|'), '&') != NULL, NULL);
     
     free (str);
