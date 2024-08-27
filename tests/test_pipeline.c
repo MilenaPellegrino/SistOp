@@ -231,6 +231,7 @@ START_TEST (test_to_string)
     char *str = NULL;
     /* MAX_LENGTH veces el mismo comando simple */
     for (int i=0; i<MAX_LENGTH; i++) {
+        printf("\n");
         scommand cmd=scommand_new();
         scommand_push_back(cmd, strdup ("gtk-fuse"));
         pipeline_push_back (pipe, cmd);
