@@ -219,7 +219,7 @@ char * pipeline_to_string(const pipeline self){
 	char *result = NULL;
 	char *killme = NULL;
 	char *killme2 = NULL;
-	//char *amper = " && ";
+	char *amper = " & ";
 	char *pipe = " | ";
 	if (!pipeline_is_empty(self)) {
 		GQueue *tmp = g_queue_copy(self->commands);
@@ -231,17 +231,13 @@ char * pipeline_to_string(const pipeline self){
 		while (!g_queue_is_empty(tmp)) {
 			aux = g_queue_pop_head(tmp);
 			killme = scommand_to_string(aux);
-
-			//if (self->wait==true) {
-			//	killme2 = strmerge(amper, killme);
-			//} else {
 			killme2 = strmerge(pipe, killme);	
-			//}
-
             killme = result;
             result = strmerge(result, killme2);
             g_free(killme);
             g_free(killme2);
+			killme=NULL;
+			killme2=NULL;
 		}
         g_queue_free(tmp);
 	}
@@ -249,6 +245,12 @@ char * pipeline_to_string(const pipeline self){
         result = malloc(1);
 		result[0] = '\0';
     }
+	if (!pipeline_get_wait(self)) {
+		killme = result;
+		result = strmerge(result,amper);
+		g_free(killme);
+		killme=NULL;
+	}
 	assert(pipeline_is_empty(self) || pipeline_get_wait(self) || strlen(result)>0);
     return result;
 }
