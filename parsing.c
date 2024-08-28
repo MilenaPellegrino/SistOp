@@ -6,18 +6,13 @@
 #include "parser.h"
 #include "command.h"
 
-//ls, exit, wc, help y cd
-//const char * comands[5]={"ls", "exit", "wc", "help", "cd"};
-
-
-//CREO QUE EL ERROR ESTÁ EN QUE TENEMOS QUE PARSEAR CON COMANDOS REALES
 static scommand parse_scommand(Parser p) {
     scommand result = scommand_new();
     char *arg = NULL;
     arg_kind_t type;
     parser_skip_blanks(p);
     arg = parser_next_argument(p, &type);
-    while (arg != NULL) {
+    while (arg != NULL && result != NULL) {
 		if (type == ARG_NORMAL){
         scommand_push_back(result, arg);
     }
@@ -27,13 +22,9 @@ static scommand parse_scommand(Parser p) {
         else if (type == ARG_OUTPUT){
             scommand_set_redir_out(result, arg);
     }
-        else {
-            printf("Orden no encontrada.(error de parseo)\n");
-            result = scommand_destroy(result);
-        }
+    	parser_skip_blanks(p);
         free(arg);
         arg = NULL;
-    	parser_skip_blanks(p);
     	arg = parser_next_argument(p, &type);
     }
     if (scommand_is_empty(result)) {
@@ -46,25 +37,26 @@ pipeline parse_pipeline(Parser p) {
     assert(p!=NULL && !parser_at_eof(p));
     pipeline result = pipeline_new();
     scommand cmd = scommand_new();
-    bool error = false, another_pipe=true;
-	bool background = false;
-    bool garbage = false;
+    bool error = false, another_pipe=true, at_eof = false;
+	bool wait = false, garbage = false; 
 	char * garb= NULL;
-	while (another_pipe && !error) {
 		cmd = parse_scommand(p);
     	error = (cmd==NULL);
-    	if (!error) {
-			pipeline_push_back(result,cmd);
-		}
+	while (another_pipe && !error && !at_eof) {
+		pipeline_push_back(result, cmd);
     	parser_op_pipe(p, &another_pipe);
-    	parser_op_background(p, &background);
+        at_eof = parser_at_eof(p);
+    	cmd = parse_scommand(p);
+    	error = (cmd==NULL);
     }
-	pipeline_set_wait(result, background);
+    parser_op_background(p, &wait);
+	pipeline_set_wait(result, !wait);
 	parser_garbage(p,&garbage);
 	garb = parser_last_garbage(p);
 	if (garbage) {
 		result = pipeline_destroy(result);
-        printf("%s", garb);
+        result = NULL;
+        printf("Na amigo, hay una re basura acá: %s", garb);
 	}
 	p = parser_destroy(p);
     return result;
