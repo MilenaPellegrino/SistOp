@@ -57,7 +57,7 @@ pipeline parse_pipeline(Parser p) {
 		result = pipeline_destroy(result);
         result = NULL;
         printf("Na amigo, hay una re basura acá: %s", garb);
+	    p = parser_destroy(p);
 	}
-	p = parser_destroy(p);
     return result;
 }
