@@ -12,7 +12,7 @@ static scommand parse_scommand(Parser p) {
     arg_kind_t type;
     parser_skip_blanks(p);
     arg = parser_next_argument(p, &type);
-    while (parser_at_eof(p)) {
+    while (arg != NULL && result != NULL) {
 		if (type == ARG_NORMAL){
         scommand_push_back(result, arg);
     }
@@ -23,7 +23,6 @@ static scommand parse_scommand(Parser p) {
             scommand_set_redir_out(result, arg);
     }
     	parser_skip_blanks(p);
-        free(arg);
         arg = NULL;
     	arg = parser_next_argument(p, &type);
     }
