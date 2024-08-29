@@ -55,8 +55,6 @@ static void check_argument (scommand cmd, const char *first) {
     ck_assert_msg (!scommand_is_empty (cmd), NULL);
     
     arg = scommand_front (cmd);
-    printf("arg = %s   ", arg);
-    printf("first = %s : \n", first);
     ck_assert_msg (strcmp (arg, first) == 0, NULL);
 
     scommand_pop_front(cmd);
@@ -125,11 +123,8 @@ START_TEST (test_empty)
     //scommand s = NULL;
 
     init_parser("\n");
-    printf("Buenass\n");
     output = parse_pipeline(parser);
-     printf("Y chauu aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa\n");
     ck_assert_msg (output==NULL, NULL);
-    printf("Y chau\n");
     /* Esto debería generar un pipeline de un elemento, con un comando
      * vacío adentro FIXME: Me parece que no es cierto
      */
