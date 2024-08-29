@@ -12,7 +12,7 @@ static scommand parse_scommand(Parser p) {
     arg_kind_t type;
     parser_skip_blanks(p);
     arg = parser_next_argument(p, &type);
-    while (arg != NULL && result != NULL) {
+    while (parser_at_eof(p)) {
 		if (type == ARG_NORMAL){
         scommand_push_back(result, arg);
     }
@@ -53,11 +53,10 @@ pipeline parse_pipeline(Parser p) {
 	pipeline_set_wait(result, !wait);
 	parser_garbage(p,&garbage);
 	garb = parser_last_garbage(p);
-	if (garbage) {
+	if (garbage || pipeline_is_empty(result)) {
 		result = pipeline_destroy(result);
         result = NULL;
         printf("Na amigo, hay una re basura acá: %s", garb);
-	    p = parser_destroy(p);
 	}
     return result;
 }
