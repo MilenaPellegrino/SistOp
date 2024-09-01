@@ -6,12 +6,25 @@
 #include "command.h"
 #include "builtin.h"
 
+#define SIZE 128
+
 char *comm_inter[] = {
     "ls",
     "wc"
 }; 
 
 unsigned int long_comm  = sizeof(comm_inter) / sizeof(comm_inter[0]);
+
+char *str[SIZE] command_to_array (scommand command) {
+	assert (command != NULL);
+	char *result[SIZE];
+	guint length = scommand_length(command);
+	for (guint i=0; i < length; i++) {
+		result[i] = g_queue_peek_nth(scommand->scomman, i);
+	}
+	result[length] = NULL;
+	return result;
+}
 
 bool is_command (const scommand cmd){
     assert(cmd!=NULL);
