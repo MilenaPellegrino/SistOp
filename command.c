@@ -6,10 +6,17 @@
 #include "strextra.h"
 #include "command.h"
 
+typedef enum {
+	NOTHING,
+	DOBLE_AMPERSAN,
+	PIPELINE
+} operator;
+
 struct scommand_s {
     GQueue* scomman;
     char* out;
     char* in;
+	operator* op;
 };
 
 
@@ -19,6 +26,7 @@ scommand scommand_new(void){
     result->scomman = g_queue_new();
     result->out = NULL;
     result->in = NULL;
+	result->op = malloc(sizeof(operator));
     assert(scommand_is_empty(result) 
 		   &&  scommand_get_redir_in(result)==NULL 
 		   &&  scommand_get_redir_out (result)==NULL);
@@ -31,9 +39,9 @@ scommand scommand_destroy(scommand self){
     g_queue_free_full(self->scomman, g_free);
     free(self->out);
     free(self->in);
+	free(self->op);
     free(self);
     self = NULL;
-
     return self;
 }
 
