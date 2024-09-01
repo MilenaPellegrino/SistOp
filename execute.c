@@ -4,5 +4,6 @@
 #include "command.h"
 
 void execute_pipeline(pipeline apipe){
-
+    assert(apipe != NULL); 
+    
 }
