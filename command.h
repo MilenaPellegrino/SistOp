@@ -33,6 +33,12 @@
 
 typedef struct scommand_s * scommand;
 
+typedef enum {
+	NOTHING,
+	DOBLE_AMPERSAN,
+	PIPELINE
+} operator;
+
 scommand scommand_new(void);
 /*
  * Nuevo `scommand', sin comandos o argumentos y los redirectores vacíos
@@ -79,6 +85,14 @@ void scommand_set_redir_out(scommand self, char * filename);
  */
 
 /* Proyectores */
+
+void scommand_set_operator(scommand self, operator opp);
+/* 
+ * Define el operador que le sigue a ese comando (|, && o nada)
+ *  self: comando al cual establecer el operador
+ *  opp: enum que indica el tipo de operación a guardar
+ * Requires: self != NULL
+ */
 
 bool scommand_is_empty(const scommand self);
 /*

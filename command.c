@@ -6,17 +6,12 @@
 #include "strextra.h"
 #include "command.h"
 
-typedef enum {
-	NOTHING,
-	DOBLE_AMPERSAN,
-	PIPELINE
-} operator;
 
 struct scommand_s {
-    GQueue* scomman;
-    char* out;
-    char* in;
-	operator* op;
+    GQueue *scomman;
+    char *out;
+    char *in;
+	operator *op;
 };
 
 
@@ -75,12 +70,22 @@ void scommand_set_redir_out(scommand self, char * filename){
     self->out = filename;
 }
 
+void scommand_set_operator(scommand self, operator opp) {
+    assert(self != NULL);
+    if (self->op != NULL)
+    {
+        free(self->op);
+        self->op = NULL;
+    }
+    self->op = &opp;
+}
+
 bool scommand_is_empty(const scommand self){
     assert(self != NULL);
     return (scommand_length(self) == 0);
 }
 
-unsigned int scommand_length(const scommand self){ //si falla es por no  poner guint
+unsigned int scommand_length(const scommand self){
     assert(self!=NULL);
     unsigned int len = g_queue_get_length(self->scomman);
     return len;
