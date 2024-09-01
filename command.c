@@ -77,7 +77,7 @@ void scommand_set_operator(scommand self, operator opp) {
         free(self->op);
         self->op = NULL;
     }
-    self->op = &opp;
+    *self->op = opp;
 }
 
 bool scommand_is_empty(const scommand self){

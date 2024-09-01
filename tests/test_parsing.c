@@ -118,6 +118,14 @@ END_TEST
  * para sacar nota "A" 
  */
 
+START_TEST (NUESTRO_TEST)
+{
+    init_parser("ls && ls\n");
+    output = parse_pipeline(parser);
+    printf("----------este es el pipeline: %s------", pipeline_to_string(output));
+}
+END_TEST
+
 START_TEST (test_empty)
 {
     //scommand s = NULL;
