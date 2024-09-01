@@ -133,6 +133,14 @@ char * scommand_get_redir_out(const scommand self);
  * Requires: self!=NULL
  */
 
+operator scomand_get_operator (const scommand opp);
+/*
+*obtiene el operador del comando que se quiere ejecutar en la consola
+*op: operador que queremos obtener
+*Returns: operador del comando
+* Requires: op!=NULL
+*/
+
 char * scommand_to_string(const scommand self);
 /* Preety printer para hacer debugging/logging.
  * Genera una representación del comando simple en un string (aka "serializar")
