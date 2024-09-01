@@ -72,11 +72,6 @@ void scommand_set_redir_out(scommand self, char * filename){
 
 void scommand_set_operator(scommand self, operator opp) {
     assert(self != NULL);
-    if (self->op != NULL)
-    {
-        free(self->op);
-        self->op = NULL;
-    }
     *self->op = opp;
 }
 

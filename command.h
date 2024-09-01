@@ -35,7 +35,7 @@ typedef struct scommand_s * scommand;
 
 typedef enum {
 	NOTHING,
-	DOBLE_AMPERSAN,
+	DOBLE_AMPERSAND,
 	PIPELINE
 } operator;
 

@@ -51,7 +51,7 @@ pipeline parse_pipeline(Parser p) {
 			opp = PIPELINE;
 			scommand_set_operator(cmd, opp);
 		} else if (aux1 && aux2) {
-			opp = DOBLE_AMPERSAN;
+			opp = DOBLE_AMPERSAND;
 			scommand_set_operator(cmd, opp);
 		} else {
 			opp = NOTHING;
