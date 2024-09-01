@@ -21,11 +21,12 @@ unsigned int long_comm  = sizeof(comm_inter) / sizeof(comm_inter[0]);
 bool builtin_is_internal(scommand cmd){
     assert(cmd!=NULL);
     bool is_internal = false;
-    for(unsigned int i =0; i<long_comm; i++){
+    bool matches = true;
+    for(unsigned int i =0; i<long_comm && matches; i++){
         char *comm_act = comm_inter[i];
         if(strcmp(comm_act, scommand_front(cmd))){
             is_internal = true;
-            break;
+            matches = false;
         }
     }
     return is_internal;
@@ -110,7 +111,7 @@ void run_cd(scommand cmd){
 
 void  run_help(scommand cmd){
     printf("Shell   -->   MyBash\n" 
-            "Autores -->   Castillo Agustin, Gonzales Juan Pablo, Madero Ismael, Pellegrino Milena \n \n"
+            "Autores -->   Castillo Agustin, Gonzalez Juan Pablo, Madero Ismael, Pellegrino Milena \n \n"
             "Comandos: \n"
                "(1) 'cd <path>' -> Cambiar el directorio actual \n"
                "(2) 'help' -> Descripcion breve del uso de cada comando \n"
