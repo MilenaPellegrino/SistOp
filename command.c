@@ -108,6 +108,11 @@ char * scommand_get_redir_out(const scommand self){
     return self->out;
 }
 
+operator scomand_get_operator (const scommand opp){
+    assert(opp!=NULL);
+    return *opp->op;
+}
+
 char * scommand_to_string(const scommand self){
     assert(self != NULL);
 	char *result = NULL;
