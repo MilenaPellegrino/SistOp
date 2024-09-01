@@ -37,18 +37,32 @@ pipeline parse_pipeline(Parser p) {
     pipeline result = pipeline_new();
     scommand cmd = scommand_new();
     bool error = false, another_pipe=true, at_eof = false;
-	bool wait = false, garbage = false; 
+	bool wait = false, garbage = false, aux1=false, aux2=false;
 	char * garb= NULL;
-		cmd = parse_scommand(p);
-    	error = (cmd==NULL);
+	operator opp;
+	cmd = parse_scommand(p);
+    error = (cmd==NULL);
 	while (another_pipe && !error && !at_eof) {
 		pipeline_push_back(result, cmd);
     	parser_op_pipe(p, &another_pipe);
+    	parser_op_background(p, &aux1);
+    	parser_op_background(p, &aux2);
+		if (another_pipe) {
+			opp = PIPELINE;
+			scommand_set_operator(cmd, opp);
+		} else if (aux1 && aux2) {
+			opp = DOBLE_AMPERSAN;
+			scommand_set_operator(cmd, opp);
+		} else {
+			opp = NOTHING;
+			scommand_set_operator(cmd, opp);
+		}
+		another_pipe =  another_pipe || (aux1 && aux2);
         at_eof = parser_at_eof(p);
     	cmd = parse_scommand(p);
     	error = (cmd==NULL);
     }
-    parser_op_background(p, &wait);
+	wait = aux1 && !aux2;
 	pipeline_set_wait(result, !wait);
 	parser_garbage(p,&garbage);
 	garb = parser_last_garbage(p);
