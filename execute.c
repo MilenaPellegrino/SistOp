@@ -32,7 +32,7 @@ char *command_to_array (scommand command) {
 	result[length] = malloc(strlen(aux)+1);
 	strcpy(result[length], aux);
 	result[length+1] = NULL;
-	return result;
+	return *result;
 }
 
 bool is_command (const scommand cmd){
@@ -49,44 +49,64 @@ bool is_command (const scommand cmd){
     return is_command;
 }
 
-void command_run (const scommand cmd, char *input, pipeline apipe) {
+int command_run (const scommand cmd, char *input, pipeline apipe) {
+    char *cmd_arr[SIZE];
     bool wait = pipeline_get_wait(apipe);
 	operator opp = scommand_get_operator(cmd);
 	pid_t pid;
+    int error_or_succes = 1;
 	if (input != NULL) {
-		command_set_redir_in(cmd,input);
+		scommand_set_redir_in(cmd,input);
 	}
 	if (opp == PIPELINE) { 			// Ve el caso de hacer un PIPE
 		int pipefd[2];				// la idea con esto es hacer una
 		if (pipe(pipefd) == -1) {	// llamada a command_run con el
-			perror("pipe");			// siguiente comando del pipeline
-			exit(EXIT_FAILURE);
+			perror("pipe"); 		// siguiente comando del pipeline
 		}
 	}
-	pid=fork();
+	pid = fork();
 	if (pid == -1) {
 		perror("fork");
-		exit(EXIT_FAILURE);
-	} else if (pid == 0) {
-		char *cmd_arr[SIZE] = command_to_array(cmd);
-		execvp(cmd_arr[0], cmd_arr);
-		if (opp == PIPELINE) {
+
+	} else if (pid == 0) {                            //Hijo
+		cmd_arr[] = command_to_array(cmd);
+		if (execvp(cmd_arr[0], cmd_arr) == -1)
+        {
+            error_or_succes = 0;
+        }
+        else {
+         if (opp == PIPELINE) {
 			cmd = scommand_destroy(cmd);
         	cmd = pipeline_front(apipe);
         	pipeline_pop_front(apipe);
-			// de alguna forma pasar el output del comando actual 
-			// en el apartado char *input en la llamada del sig
-			// command_run
-		}
+            command_run(cmd, pipefd[0], apipe);
+            close(pipefd[0]);
+            close(pipefd[1]);
+		    }   
+        }
 	}
-	//
-	//
-	//COMPLETAR
-	//Funcion open, close, y dup.
-	//
-	if (wait) {
-		wait(NULL);
-	}
+    else if (pid > 0) {                                //Papi
+        if (opp == PIPELINE) {
+            close(pipefd[0]);
+            dup2(1, pipefd[1]);                    //.............HACER ERRORES
+            close(1);
+            close(pipefd[1]);
+        }
+        char *out = scommand_get_redir_out(cmd);
+        if (out != NULL)
+        {
+            int file_descriptor_out = open(out, O_WRONLY);
+            dup2(1, file_descriptor_out);           //............HACER ERRORES
+            close(1);                               //Qué cerrar????
+            close(file_descriptor_out);             //???
+        }
+	    if (wait) {
+	        wait(NULL);
+    	}
+    }
+
+    scommand_destroy(cmd);
+    return error_or_succes;
 }
 
 void execute_pipeline(pipeline apipe){

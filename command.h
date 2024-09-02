@@ -133,7 +133,7 @@ char * scommand_get_redir_out(const scommand self);
  * Requires: self!=NULL
  */
 
-operator scomand_get_operator (const scommand opp);
+operator scommand_get_operator (const scommand opp);
 /*
 *obtiene el operador del comando que se quiere ejecutar en la consola
 *op: operador que queremos obtener
