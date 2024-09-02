@@ -1,6 +1,8 @@
 #include <stdio.h>
+#include <stdlib.h>
 #include <assert.h>
-#include <stdbool.h>
+#include <glib.h>
+#include <string.h>
 #include <unistd.h> //syscall
 #include "execute.h"
 #include "command.h"
