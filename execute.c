@@ -4,6 +4,12 @@
 #include <glib.h>
 #include <string.h>
 #include <unistd.h> //syscall
+#include <sys/types.h>
+#include <sys/stat.h>
+#include <fcntl.h>
+#include <sys/wait.h>
+
+
 #include "execute.h"
 #include "command.h"
 #include "builtin.h"
@@ -17,9 +23,9 @@ char *comm_inter[] = {
 
 unsigned int long_comm  = sizeof(comm_inter) / sizeof(comm_inter[0]);
 
-char *command_to_array (scommand command) {
+char **command_to_array (scommand command) {
 	assert (command != NULL);
-	char *result[SIZE];
+	char **result = malloc((scommand_length(command)+2)*sizeof(char *));
 	char *aux = NULL;
 	guint length = scommand_length(command);
 	for (guint i=0; i < length; i++) {
@@ -32,7 +38,7 @@ char *command_to_array (scommand command) {
 	result[length] = malloc(strlen(aux)+1);
 	strcpy(result[length], aux);
 	result[length+1] = NULL;
-	return *result;
+	return result;
 }
 
 bool is_command (const scommand cmd){
@@ -49,60 +55,85 @@ bool is_command (const scommand cmd){
     return is_command;
 }
 
-int command_run (const scommand cmd, char *input, pipeline apipe) {
-    char *cmd_arr[SIZE];
-    bool wait = pipeline_get_wait(apipe);
+int command_run (scommand cmd, int fd, pipeline apipe) {
+    char **cmd_arr;
+    int aux_pointer =0; 
+    bool waiting = pipeline_get_wait(apipe);
 	operator opp = scommand_get_operator(cmd);
 	pid_t pid;
     int error_or_succes = 1;
-	if (input != NULL) {
-		scommand_set_redir_in(cmd,input);
-	}
-	if (opp == PIPELINE) { 			// Ve el caso de hacer un PIPE
-		int pipefd[2];				// la idea con esto es hacer una
-		if (pipe(pipefd) == -1) {	// llamada a command_run con el
-			perror("pipe"); 		// siguiente comando del pipeline
-		}
-	}
-	pid = fork();
-	if (pid == -1) {
-		perror("fork");
+    char *out = scommand_get_redir_out(cmd);
+    int status;
 
-	} else if (pid == 0) {                            //Hijo
-		cmd_arr[] = command_to_array(cmd);
-		if (execvp(cmd_arr[0], cmd_arr) == -1)
-        {
-            error_or_succes = 0;
+    if (opp == PIPELINE) {
+        int pipefd[2];				// la idea con esto es hacer una
+        if (pipe(pipefd) == -1) {	// llamada a command_run con el
+			perror("pipe");
         }
-        else {
-         if (opp == PIPELINE) {
-			cmd = scommand_destroy(cmd);
-        	cmd = pipeline_front(apipe);
-        	pipeline_pop_front(apipe);
-            command_run(cmd, pipefd[0], apipe);
-            close(pipefd[0]);
-            close(pipefd[1]);
-		    }   
+        pid = fork();
+        if (fd > 1) {
+            dup2(0, fd);
         }
-	}
-    else if (pid > 0) {                                //Papi
-        if (opp == PIPELINE) {
+        if (pid == -1) {
+            perror("fork");
+	    } else if (pid == 0) {                            //Hijo
+            cmd_arr = command_to_array(cmd);
+            if (execvp(cmd_arr[0], cmd_arr) == -1) {
+                error_or_succes = 0;
+            } else {
+                cmd = scommand_destroy(cmd);
+                cmd = pipeline_front(apipe);
+                pipeline_pop_front(apipe);
+                aux_pointer = pipefd[0];
+                command_run(cmd, aux_pointer, apipe);
+                close(pipefd[0]);
+                close(pipefd[1]);
+            }
+	    } else if (pid > 0) {                                //Papi
             close(pipefd[0]);
-            dup2(1, pipefd[1]);                    //.............HACER ERRORES
+            dup2(1, pipefd[1]);                   
             close(1);
             close(pipefd[1]);
+            if (out != NULL) {
+                int file_descriptor_out = open(out, O_WRONLY);
+                dup2(1, file_descriptor_out);           //............HACER ERRORES
+                close(1);                               //Qué cerrar????
+                close(file_descriptor_out);             //???
+            }
+            if (waiting) {
+                wait(&status);
+            }
         }
-        char *out = scommand_get_redir_out(cmd);
-        if (out != NULL)
-        {
-            int file_descriptor_out = open(out, O_WRONLY);
-            dup2(1, file_descriptor_out);           //............HACER ERRORES
-            close(1);                               //Qué cerrar????
-            close(file_descriptor_out);             //???
+    }
+
+    else if (opp == DOBLE_AMPERSAND) {
+        pid = fork();
+        if (fd > 1) {
+            dup2(0, fd);
         }
-	    if (wait) {
-	        wait(NULL);
-    	}
+        if (pid == -1) {
+            perror("fork");
+	    } else if (pid > 0) {                                //Papi
+            if (out != NULL) {
+                int file_descriptor_out = open(out, O_WRONLY);
+                dup2(1, file_descriptor_out);           //............HACER ERRORES
+                close(1);                               //Qué cerrar????
+                close(file_descriptor_out);             //???
+            }
+            if (waiting) {
+                wait(&status);
+            }
+	    } else if (pid == 0) {                            //Hijo
+            cmd_arr = command_to_array(cmd);
+            if (execvp(cmd_arr[0], cmd_arr) == -1) {
+                error_or_succes = 0;
+            } else {
+                cmd = scommand_destroy(cmd);
+                cmd = pipeline_front(apipe);
+                pipeline_pop_front(apipe);
+                command_run(cmd, 0, apipe);
+            }
+        }
     }
 
     scommand_destroy(cmd);
@@ -126,7 +157,7 @@ void execute_pipeline(pipeline apipe){
         }
         else if (command && !builtin) { //syscall
 			while (!pipeline_is_empty(apipe)) {
-				command_run(cmd, NULL, apipe);
+				command_run(cmd, 0, apipe);
 			}
         }
     }
