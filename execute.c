@@ -16,12 +16,12 @@
 
 #define SIZE 128
 
-char *comm_inter[] = {
+char *intern_comm[] = {
     "ls",
     "wc"
 }; 
 
-unsigned int long_comm  = sizeof(comm_inter) / sizeof(comm_inter[0]);
+unsigned int comm_long  = sizeof(intern_comm) / sizeof(intern_comm[0]);
 
 char **command_to_array (scommand command) {
 	assert (command != NULL);
@@ -45,9 +45,9 @@ bool is_command (const scommand cmd){
     assert(cmd!=NULL);
     bool is_command = false;
     bool matches = true;
-    for(unsigned int i=0; i<long_comm && matches; i++){
-        char *comm_act = comm_inter[i];
-        if (strcmp(comm_act, scommand_front(cmd))){
+    for(unsigned int i=0; i<comm_long && matches; i++){
+        char *comm_act = intern_comm[i];
+        if (strcmp(comm_act, scommand_front(cmd)) == 0){
             is_command = true;
             matches = false;
         }
@@ -91,7 +91,7 @@ int command_run (scommand cmd, int fd, pipeline apipe) {
             }
 	    } else if (pid > 0) {                                //Papi
             close(pipefd[0]);
-            dup2(1, pipefd[1]);                   
+            dup2(1, pipefd[1]);    // este no iria al reves? : dup2(pipefd[1], 1)               
             close(1);
             close(pipefd[1]);
             if (out != NULL) {

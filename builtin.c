@@ -8,6 +8,11 @@
 #include <string.h>
 #include "builtin.h"
 
+// Declaracion de las funciones
+void run_cd(scommand cmd);
+void run_help(scommand cmd);
+void run_exit(scommand cmd);
+
 // En caso de que haya mas comandos internos se podrian agregar sin problemas
 char *comm_inter[] = {
     "cd",
@@ -45,7 +50,7 @@ bool builtin_alone(pipeline p){
 
 /* Funciones auxiliares e implementacion del diccionario */
 
-// Implementamos la estructura del map 
+// Implementamos la estructura del diccionario 
 typedef struct {
     char *command;
     void (*run_comm)(scommand);
@@ -88,7 +93,7 @@ void run_cd(scommand cmd){
                 printf("Ocurrió un error de entrada/salida.\n");
                 break;
             case ELOOP:
-                prtinf("Se encontraron demasiados enlaces simbólicos al resolver la ruta.\n");
+                printf("Se encontraron demasiados enlaces simbólicos al resolver la ruta.\n");
                 break;
             case ENAMETOOLONG: 
                 printf("La ruta es demasiado larga. \n");
