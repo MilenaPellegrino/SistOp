@@ -144,21 +144,28 @@ void execute_pipeline(pipeline apipe){
     assert(apipe != NULL);
     scommand cmd;
     bool command=true, builtin=true;
+    if (pipeline_is_empty(apipe)) { // caso base
+        return;
+    }
+    if (builtin_alone(apipe)) {     // caso base
+        return;
+    }
+
     while (pipeline_length(apipe)!=0 && (command || builtin)) {
         cmd = pipeline_front(apipe);
         pipeline_pop_front(apipe);
         command = is_command(cmd);
         builtin = builtin_is_internal(cmd);
-        if ((!command && !builtin) || (command && builtin)) {
-            printf("error\n");
+        if (command && !builtin) { //syscall
+			while (!pipeline_is_empty(apipe)) {
+				command_run(cmd, 0, apipe);
+			}
         }
         else if (builtin && !command){
             builtin_run(cmd);
         }
-        else if (command && !builtin) { //syscall
-			while (!pipeline_is_empty(apipe)) {
-				command_run(cmd, 0, apipe);
-			}
+        else if ((!command && !builtin) || (command && builtin)) {
+            printf("error\n");
         }
     }
 }
