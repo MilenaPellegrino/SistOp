@@ -34,10 +34,7 @@ char **command_to_array (scommand command) {
 		strcpy(result[i], aux);
 		scommand_pop_front(command);
 	}
-	aux = scommand_get_redir_in(command);
-	result[length] = malloc(strlen(aux)+1);
-	strcpy(result[length], aux);
-	result[length+1] = NULL;
+	result[length] = NULL;
 	return result;
 }
 
@@ -56,95 +53,150 @@ bool is_command (const scommand cmd){
 }
 
 int command_run (scommand cmd, int fd, pipeline apipe) {
-    char **cmd_arr;
-    int aux_pointer =0; 
-    bool waiting = pipeline_get_wait(apipe);
-	operator opp = scommand_get_operator(cmd);
-	pid_t pid;
-    int error_or_succes = 1;
-    char *out = scommand_get_redir_out(cmd);
-    int status;
+    char **cmd_arg;								//Arreglo para guardar argumentos, ideal para execvp.
+    bool waiting = pipeline_get_wait(apipe);	//Booleano para ver ejecucion en seg plano.
+    int error = 2;								//Entero a devolver, indica error en ejecucion. Ver definicion de command_run.
+    int status;									//Entero, ideal para usar con wait.
+	char *in = scommand_get_redir_in(cmd);		//String que guarda valor del input.
+    char *out = scommand_get_redir_out(cmd);	//""     ""  ""     ""    ""  output.
+	operator opp = scommand_get_operator(cmd);	//operator que define tipo de pipe: opp={PIPELINE, DOBLE_AMPERSAND, NOTHING}
+	pid_t pid;									//Variable para almacenar procces id, ideal para fork.
 
-    if (opp == PIPELINE) {
-        int pipefd[2];				// la idea con esto es hacer una
-        if (pipe(pipefd) == -1) {	// llamada a command_run con el
-			perror("pipe");
-        }
-        pid = fork();
-        if (fd > 1) {
-            dup2(0, fd);
-        }
-        if (pid == -1) {
+	int errorpipe[2];							//Se crea el array de enteros, ideal para compartir el error entre procesos.
+    if (pipe(errorpipe) == -1) {				//Se usa pipe generando file
+		perror("pipe");							//descriptors en errorpipe para 
+    }											//transimitir info entre procesos.
+
+    if (opp == PIPELINE) {	//--------------------------------------------PIPELINE-------------------------------------
+		int outinpipe[2];				//Se crea el array de enteros, ideal para el pipeline.
+		if (pipe(outinpipe) == -1) {	//Se usa pipe generando file
+			perror("pipe");				//descriptors en outinpipe para 
+        }								//transimitir info entre procesos.
+        
+		pid = fork();					//Inicia fork.
+
+	    if (pid == -1) {				//ERROR en la creacion del fork.
             perror("fork");
-	    } else if (pid == 0) {                            //Hijo
-            cmd_arr = command_to_array(cmd);
-            if (execvp(cmd_arr[0], cmd_arr) == -1) {
-                error_or_succes = 0;
-            } else {
-                cmd = scommand_destroy(cmd);
-                cmd = pipeline_front(apipe);
-                pipeline_pop_front(apipe);
-                aux_pointer = pipefd[0];
-                command_run(cmd, aux_pointer, apipe);
-                close(pipefd[0]);
-                close(pipefd[1]);
-            }
-	    } else if (pid > 0) {                                //Papi
-            close(pipefd[0]);
-            dup2(1, pipefd[1]);    // este no iria al reves? : dup2(pipefd[1], 1)               
-            close(1);
-            close(pipefd[1]);
-            if (out != NULL) {
-                int file_descriptor_out = open(out, O_WRONLY);
-                dup2(1, file_descriptor_out);           //............HACER ERRORES
-                close(1);                               //Qué cerrar????
-                close(file_descriptor_out);             //???
-            }
-            if (waiting) {
-                wait(&status);
-            }
-        }
-    }
+		} 
+		else if (pid == 0) {                        //Hijo-------------------------------------------------------------
+			close(outinpipe[0]);								//Cerrar file descriptor no usado.    
+			close(errorpipe[0]);								//Cerrar file descriptor no usado.    
 
-    else if (opp == DOBLE_AMPERSAND) {
-        pid = fork();
-        if (fd > 1) {
-            dup2(0, fd);
+			if (fd > 1 && in==NULL) {							//Estos if's se encargan
+        		dup2(fd, 0);									//de modificar el input
+    		} else if (fd == 0 && in!=NULL) {					//en caso de necesidad...
+				fd = open(in, O_WRONLY);						//...
+        		dup2(fd, 0);									//...
+				close(fd);										//...
+				fd = 0;											//...
+			} else if (fd > 1 && in!=NULL) {					//...
+				printf ("Error: usas dos inputs para un mismo comando\n");
+				// Ver que hacer
+			}
+        
+			if (out != NULL) {									//Error doble output. 
+					printf("ERROR: Intenta agregar un output mientras usa pipe\n"
+							"	   se prioriza el output del pipe.\n");
+			}
+
+            dup2(outinpipe[1], 1);								//Redirigimos la salida estandar al
+            close(outinpipe[1]);								//write file descriptor de la pipe.
+			
+            cmd_arg = command_to_array(cmd);					//Tomamos el comando para ejecutar.
+            if (execvp(cmd_arg[0], cmd_arg) == -1) {			//Ejecutamos el comando.
+                error = -1;										//Entra el caso de error.
+            }
+
+			free(cmd_arg);										//Liberamos memoria almacenada
+			cmd_arg = NULL;										//por command_to_array
+
+			write(errorpipe[1], &error, sizeof(error)); 		//Escribimos el error de la ejecucion en el pipe.
+			close(errorpipe[1]);								//Cerramos el pipe recien usado.
+		}
+		else if (pid > 0) {							//Papi-------------------------------------------------------------
+            close(outinpipe[1]);								//Cerrar file descriptor no usado.
+            close(errorpipe[1]);								//Cerrar file descriptor no usado.
+
+			if (waiting) {
+                wait(&status);									//En caso de wait el padre espera al hijo.
+            }
+
+            cmd = scommand_destroy(cmd);						//Tomamos el sig comando del
+            cmd = pipeline_front(apipe);						//pipeline ya que estamos en 
+            pipeline_pop_front(apipe);							//el caso de pipe.
+            
+			command_run(cmd, outinpipe[0], apipe);				//Se llama el sig. comando con el read
+			close(outinpipe[0]);								//file descriptor de la pipe.
+	
+			read(errorpipe[0], &error, sizeof(error)); 			//Leemos el error de la ejecucion.
+			close(errorpipe[0]); 								//Cerrar file descriptor.
         }
-        if (pid == -1) {
+	} 
+	else if (opp == DOBLE_AMPERSAND || opp == NOTHING) { //------------------DOBLE_AMPERSAN || NOTHING---------------------------------
+		pid = fork();						//Inicia fork.
+	    
+		if (pid == -1) {					//ERROR en la creacion del fork.
             perror("fork");
-	    } else if (pid > 0) {                                //Papi
-            if (out != NULL) {
-                int file_descriptor_out = open(out, O_WRONLY);
-                dup2(1, file_descriptor_out);           //............HACER ERRORES
-                close(1);                               //Qué cerrar????
-                close(file_descriptor_out);             //???
-            }
-            if (waiting) {
-                wait(&status);
-            }
-	    } else if (pid == 0) {                            //Hijo
-            cmd_arr = command_to_array(cmd);
-            if (execvp(cmd_arr[0], cmd_arr) == -1) {
-                error_or_succes = 0;
-            } else {
-                cmd = scommand_destroy(cmd);
-                cmd = pipeline_front(apipe);
-                pipeline_pop_front(apipe);
-                command_run(cmd, 0, apipe);
-            }
-        }
-    }
+	    } 
+		else if (pid == 0) {                        //Hijo-------------------------------------------------------------
+			close(errorpipe[0]);								//Cerrar file descriptor no usado.    
 
-    scommand_destroy(cmd);
-    return error_or_succes;
+			if (fd > 1 && in==NULL) {							//Estos if's se encargan
+        		dup2(fd, 0);									//de modificar el input
+    		} else if (fd == 0 && in!=NULL) {					//en caso de necesidad...
+				fd = open(in, O_WRONLY);						//...
+        		dup2(fd, 0);									//...
+				close(fd);										//...
+				fd = 0;											//...
+			} else if (fd > 1 && in!=NULL) {					//...
+				printf ("Error: usas dos inputs para un mismo comando\n");
+				// Ver que hacer
+			}
+        
+			if (out != NULL) {									//Este if se encarga de 
+        		int file_descriptor_out = open(out, O_WRONLY);	//modificar el output
+        		dup2(1, file_descriptor_out);           		//en caso de necesidad.
+        		close(file_descriptor_out);
+			}
+
+            cmd_arg = command_to_array(cmd);					//Tomamos el comando para ejecutar.
+            if (execvp(cmd_arg[0], cmd_arg) == -1) {			//Ejecutamos el comando.
+				if (opp == DOBLE_AMPERSAND) {					//Si ocurre error en operator
+                error = 0;										//DOBLE_AMPERSAN setea error en 0.
+				} 												
+				else if (opp == NOTHING) {						//Si ocurre ERROR en operator
+				error = 1;										//NOTHING setea error en 1.
+				}
+            }
+
+			free(cmd_arg);										//Liberamos memoria almacenada
+			cmd_arg = NULL;										//por command_to_array
+
+			write(errorpipe[1], &error, sizeof(error)); 		//Escribimos el error de la ejecucion en el pipe.
+			close(errorpipe[1]);								//Cerramos el pipe recien usado.
+	    } 
+		else if (pid > 0) {							//Papi-------------------------------------------------------------
+            close(errorpipe[1]);								//Cerrar file descriptor no usado.
+
+			if (waiting) {
+                wait(&status);									//En caso de wait el padre espera al hijo.
+            }
+
+			read(errorpipe[0], &error, sizeof(error)); 			//Leemos el error de la ejecucion.
+			close(errorpipe[0]); 								//Cerrar file descriptor.
+        }
+    	scommand_destroy(cmd);
+    }
+	return error;
 }
 
 void execute_pipeline(pipeline apipe){
     assert(apipe != NULL);
     scommand cmd;
+	int error=1;
+	int fdinput = 0;
     bool command=true, builtin=true;
-    while (pipeline_length(apipe)!=0 && (command || builtin)) {
+    while (pipeline_length(apipe)!=0 && (command || builtin) && error!=0) {
         cmd = pipeline_front(apipe);
         pipeline_pop_front(apipe);
         command = is_command(cmd);
@@ -156,9 +208,10 @@ void execute_pipeline(pipeline apipe){
             builtin_run(cmd);
         }
         else if (command && !builtin) { //syscall
-			while (!pipeline_is_empty(apipe)) {
-				command_run(cmd, 0, apipe);
-			}
+			error = command_run(cmd, fdinput, apipe);
         }
     }
+	if (error==0) {
+		printf("Error en ejecucion de comando con doble ampersand.\n");
+	}
 }
