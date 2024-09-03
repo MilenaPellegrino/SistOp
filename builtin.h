@@ -38,5 +38,26 @@ void builtin_run(scommand cmd);
  *
  */
 
+void run_cd(scommand cmd);
+/* 
+ * Ejecuta el comando cd en mybash
+ * 
+ * REQUIRES: cmd != NULL
+ */
+
+void run_help(scommand cmd);
+/* 
+ * Ejecuta el comando help en mybash
+ * 
+ * REQUIRES: cmd != NULL
+ */
+
+void run_exit(scommand cmd);
+/* 
+ * Ejecuta el comando exit en mybash
+ * 
+ * REQUIRES: cmd != NULL
+ */
+
 #endif
 

@@ -3,15 +3,11 @@
 #include <stdbool.h>
 #include <unistd.h>
 #include <errno.h>  // Ver cual fue el error del chdir 
-#include "command.h"
 #include <assert.h>
 #include <string.h>
-#include "builtin.h"
 
-// Declaracion de las funciones
-void run_cd(scommand cmd);
-void run_help(scommand cmd);
-void run_exit(scommand cmd);
+#include "command.h"
+#include "builtin.h"
 
 // En caso de que haya mas comandos internos se podrian agregar sin problemas
 char *comm_inter[] = {
@@ -20,32 +16,26 @@ char *comm_inter[] = {
     "exit"
 }; 
 
-// Obtenemos el tamano por si se agregan mas
-unsigned int long_comm  = sizeof(comm_inter) / sizeof(comm_inter[0]);  
+// Obtenemos el tamano por si se agregan mas pero en principio son 3
+static unsigned int long_comm  = 3;
 
 bool builtin_is_internal(scommand cmd){
     assert(cmd!=NULL);
     bool is_internal = false;
-    bool matches = true;
-    for(unsigned int i =0; i<long_comm && matches; i++){
-        char *comm_act = comm_inter[i];
-        if(strcmp(comm_act, scommand_front(cmd))){
+    unsigned int i = 0;
+    while (!is_internal && i < long_comm)
+    {
+        if (strcmp(scommand_front(cmd), comm_inter[i]) == 0) {
             is_internal = true;
-            matches = false;
         }
+        i++;
     }
     return is_internal;
 }
 
 bool builtin_alone(pipeline p){
     assert(p!=NULL);
-    bool pipe_alone = false; 
-    if(pipeline_length(p) == 1 && builtin_is_internal(pipeline_front(p))){
-        pipe_alone = true;
-    }
-    assert(pipeline_length(p) == 1 &&
-           builtin_is_internal(pipeline_front(p)));
-    return pipe_alone;
+    return pipeline_length(p) == 1 && builtin_is_internal(pipeline_front(p));;
 }
 
 /* Funciones auxiliares e implementacion del diccionario */
@@ -64,7 +54,7 @@ command_builtin builtin_table[] = {
     {"exit", run_exit}
 };
 
-// Calculamos el tamano de la tabla por si se agregan mas 
+// Calculamos el tamano de la tabla por si se agregan mas pero en principio son 3
 unsigned int command_length = sizeof(builtin_table) / sizeof(builtin_table[0]);
 
 /* 
@@ -78,7 +68,7 @@ y lo agregamos a nuestra diccionario de comandos
 void run_cd(scommand cmd){
     scommand_pop_front(cmd); // Sacamos el comando cd, para ver el supuesto directorio
     char *path = scommand_front(cmd); // Obtenemos la ruta del directorio 
-    int cdir = chdir(path);  // Cambiamos el directorio
+    int cdir = chdir(path);  // Cambiamos el directorio 
 
     if(cdir == -1){ // Si retorna (-1) ocurrio un error
         // Diferentes casos de errores 

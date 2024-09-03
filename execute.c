@@ -196,6 +196,9 @@ void execute_pipeline(pipeline apipe){
 	int error=1;
 	int fdinput = 0;
     bool command=true, builtin=true;
+    if (pipeline_is_empty(apipe) || builtin_alone(apipe)) { // caso base
+        return;
+    }
     while (pipeline_length(apipe)!=0 && (command || builtin) && error!=0) {
         cmd = pipeline_front(apipe);
         pipeline_pop_front(apipe);
