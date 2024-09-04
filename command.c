@@ -22,6 +22,7 @@ scommand scommand_new(void){
     result->out = NULL;
     result->in = NULL;
 	result->op = malloc(sizeof(operator));
+	*result->op = NOTHING;
     assert(scommand_is_empty(result) 
 		   &&  scommand_get_redir_in(result)==NULL 
 		   &&  scommand_get_redir_out (result)==NULL);
@@ -193,8 +194,8 @@ void pipeline_push_back(pipeline self, scommand sc){
 
 void pipeline_pop_front(pipeline self){
     assert(self!=NULL && !pipeline_is_empty(self));
-    gpointer kill_data =  g_queue_pop_head(self->commands);
-    g_free(kill_data);
+    scommand kill_data =  g_queue_pop_head(self->commands);
+	scommand_destroy(kill_data);
 }
 
 

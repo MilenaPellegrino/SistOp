@@ -1,6 +1,7 @@
 #include <check.h>
 #include <signal.h>
 #include <stdlib.h>
+#include <stdio.h>
 #include <assert.h>
 #include "test_execute.h"
 
@@ -86,6 +87,7 @@ START_TEST (test_builtin_chdir)
     ck_assert_msg (mock_counter_execvp==0, NULL);
     ck_assert_msg (mock_counter_exit==0, NULL);
     /* Hizo 1 cambio de directorio */
+	printf("%d-------------------------\n", mock_counter_chdir);
     ck_assert_msg (mock_counter_chdir==1, NULL);
     ck_assert_msg (strcmp (mock_chdir_last, test_path)==0, NULL);
 }

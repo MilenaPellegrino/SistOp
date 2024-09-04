@@ -66,6 +66,7 @@ y lo agregamos a nuestra diccionario de comandos
 
 // Command = cd
 void run_cd(scommand cmd){
+	printf("Entro al run_cd\n");
     scommand_pop_front(cmd); // Sacamos el comando cd, para ver el supuesto directorio
     char *path = scommand_front(cmd); // Obtenemos la ruta del directorio 
     int cdir = chdir(path);  // Cambiamos el directorio 
@@ -126,6 +127,7 @@ void builtin_run(scommand cmd){
     char *command = scommand_front(cmd);  // Buscamos el comando a ejecutar
     for(unsigned int i =0; i<command_length; i++){
         if(strcmp(builtin_table[i].command, command) == 0){  // Lo buscamos en el diccionario
+			printf("Entro al if del builtin_run-------------------------\n");
             builtin_table[i].run_comm(cmd);  // Lo ejecutamos
             return;
         }

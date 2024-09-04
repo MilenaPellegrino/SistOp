@@ -16,12 +16,28 @@
 
 #define SIZE 128
 
+/*
 char *intern_comm[] = {
     "ls",
     "wc"
-}; 
+};
 
 unsigned int comm_long  = sizeof(intern_comm) / sizeof(intern_comm[0]);
+
+bool is_command (const scommand cmd){
+    assert(cmd!=NULL);
+    bool is_command = false;
+    bool matches = true;
+    for(unsigned int i=0; i<comm_long && matches; i++){
+        char *comm_act = intern_comm[i];
+        if (strcmp(comm_act, scommand_front(cmd)) == 0){
+            is_command = true;
+            matches = false;
+        }
+    }
+    return is_command;
+}
+*/
 
 char **command_to_array (scommand command) {
 	assert (command != NULL);
@@ -36,20 +52,6 @@ char **command_to_array (scommand command) {
 	}
 	result[length] = NULL;
 	return result;
-}
-
-bool is_command (const scommand cmd){
-    assert(cmd!=NULL);
-    bool is_command = false;
-    bool matches = true;
-    for(unsigned int i=0; i<comm_long && matches; i++){
-        char *comm_act = intern_comm[i];
-        if (strcmp(comm_act, scommand_front(cmd)) == 0){
-            is_command = true;
-            matches = false;
-        }
-    }
-    return is_command;
 }
 
 int command_run (scommand cmd, int fd, pipeline apipe) {
@@ -121,9 +123,8 @@ int command_run (scommand cmd, int fd, pipeline apipe) {
                 wait(&status);									//En caso de wait el padre espera al hijo.
             }
 
-            cmd = scommand_destroy(cmd);						//Tomamos el sig comando del
-            cmd = pipeline_front(apipe);						//pipeline ya que estamos en 
-            pipeline_pop_front(apipe);							//el caso de pipe.
+            pipeline_pop_front(apipe);							//Eliminamos el comando ya ejecutado.
+            cmd = pipeline_front(apipe);						//Agarramos el sig. para el pipe.
             
 			command_run(cmd, outinpipe[0], apipe);				//Se llama el sig. comando con el read
 			close(outinpipe[0]);								//file descriptor de la pipe.
@@ -182,10 +183,11 @@ int command_run (scommand cmd, int fd, pipeline apipe) {
                 wait(&status);									//En caso de wait el padre espera al hijo.
             }
 
+            pipeline_pop_front(apipe);							//Limpiamos memoria 
+
 			read(errorpipe[0], &error, sizeof(error)); 			//Leemos el error de la ejecucion.
 			close(errorpipe[0]); 								//Cerrar file descriptor.
         }
-    	scommand_destroy(cmd);
     }
 	return error;
 }
@@ -195,22 +197,19 @@ void execute_pipeline(pipeline apipe){
     scommand cmd;
 	int error=1;
 	int fdinput = 0;
-    bool command=true, builtin=true;
-    if (pipeline_is_empty(apipe) || builtin_alone(apipe)) { // caso base
+    bool builtin=true;
+    if (pipeline_is_empty(apipe)) { // caso base
+		printf("El pipeline ingresado es vacio------------\n");
         return;
     }
-    while (pipeline_length(apipe)!=0 && (command || builtin) && error!=0) {
+    while (pipeline_length(apipe)!=0 && error!=0) {
         cmd = pipeline_front(apipe);
-        pipeline_pop_front(apipe);
-        command = is_command(cmd);
         builtin = builtin_is_internal(cmd);
-        if ((!command && !builtin) || (command && builtin)) {
-            printf("error\n");
-        }
-        else if (builtin && !command){
+        if (builtin){
+			printf("El comando es builtin---------------------------\n");
             builtin_run(cmd);
-        }
-        else if (command && !builtin) { //syscall
+        } else { //syscall
+			printf("El comando no es builtin---------------------------\n");
 			error = command_run(cmd, fdinput, apipe);
         }
     }
