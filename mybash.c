@@ -37,7 +37,6 @@ int main(int argc, char *argv[]) {
 
     input = parser_new(stdin);
     while (!quit) {
-        ping_pong_loop(NULL);
         show_prompt();
         pipe = parse_pipeline(input);
 
