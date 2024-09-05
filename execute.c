@@ -204,10 +204,13 @@ void execute_pipeline(pipeline apipe){
     }
     while (pipeline_length(apipe)!=0 && error!=0) {
         cmd = pipeline_front(apipe);
+		char *tester = scommand_to_string(cmd);
+		printf("Comando: %s\n", tester);
         builtin = builtin_is_internal(cmd);
         if (builtin){
 			printf("El comando es builtin---------------------------\n");
             builtin_run(cmd);
+            pipeline_pop_front(apipe);							//Limpiamos memoria 
         } else { //syscall
 			printf("El comando no es builtin---------------------------\n");
 			error = command_run(cmd, fdinput, apipe);

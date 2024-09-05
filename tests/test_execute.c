@@ -80,6 +80,7 @@ START_TEST (test_builtin_chdir)
     scommand_push_back (cd_cmd, strdup ("cd"));
     scommand_push_back (cd_cmd, strdup (test_path));
     pipeline_push_back (test_pipe, cd_cmd);
+	printf("Estoy en test_builtin_chdir-------------------------\n");
 
     execute_pipeline (test_pipe);
     /* Esto no debería haber tratado de crear ni destruir procesos */
