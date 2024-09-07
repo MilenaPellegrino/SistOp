@@ -188,6 +188,11 @@ pipeline pipeline_destroy(pipeline self){
 
 void pipeline_push_back(pipeline self, scommand sc){
     assert(self!=NULL && sc!=NULL);
+	if (!pipeline_is_empty(self)){
+		if ((scommand_get_operator(g_queue_peek_tail(self->commands)) == NOTHING)) {
+			scommand_set_operator(g_queue_peek_tail(self->commands), PIPELINE);
+		}
+	}
     g_queue_push_tail(self->commands, sc);
     assert(!pipeline_is_empty(self));
 }
@@ -234,7 +239,9 @@ char * pipeline_to_string(const pipeline self){
 	char *killme = NULL;
 	char *killme2 = NULL;
 	char *amper = " & ";
+	char *d_amper = " && ";
 	char *pipe = " | ";
+	operator checker;
 	if (!pipeline_is_empty(self)) {
 		GQueue *tmp = g_queue_copy(self->commands);
 		scommand aux = NULL;
@@ -243,9 +250,15 @@ char * pipeline_to_string(const pipeline self){
 		result = scommand_to_string(aux);
 
 		while (!g_queue_is_empty(tmp)) {
+			checker = scommand_get_operator(aux);
 			aux = g_queue_pop_head(tmp);
 			killme = scommand_to_string(aux);
-			killme2 = strmerge(pipe, killme);	
+			if (checker == PIPELINE || checker == NOTHING) {
+				killme2 = strmerge(pipe, killme);	
+			} 
+			else if (checker == DOBLE_AMPERSAND) {
+				killme2 = strmerge(d_amper, killme);	
+			}
             killme = result;
             result = strmerge(result, killme2);
             g_free(killme);

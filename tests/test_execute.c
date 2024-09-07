@@ -80,7 +80,6 @@ START_TEST (test_builtin_chdir)
     scommand_push_back (cd_cmd, strdup ("cd"));
     scommand_push_back (cd_cmd, strdup (test_path));
     pipeline_push_back (test_pipe, cd_cmd);
-	printf("Estoy en test_builtin_chdir-------------------------\n");
 
     execute_pipeline (test_pipe);
     /* Esto no debería haber tratado de crear ni destruir procesos */
@@ -88,7 +87,6 @@ START_TEST (test_builtin_chdir)
     ck_assert_msg (mock_counter_execvp==0, NULL);
     ck_assert_msg (mock_counter_exit==0, NULL);
     /* Hizo 1 cambio de directorio */
-	printf("%d-------------------------\n", mock_counter_chdir);
     ck_assert_msg (mock_counter_chdir==1, NULL);
     ck_assert_msg (strcmp (mock_chdir_last, test_path)==0, NULL);
 }
@@ -266,7 +264,6 @@ START_TEST (test_pipe2_parent)
     EXIT_PROTECTED (
         execute_pipeline (test_pipe);
     );
-
     /* Creo un pipe para los dos hijos */
     ck_assert_msg (mock_counter_pipe==1, NULL);
     ck_assert_msg (mock_counter_open==0, NULL);
