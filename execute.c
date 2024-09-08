@@ -64,17 +64,14 @@ int command_run (scommand cmd, int fd, pipeline apipe) {
     char *out = scommand_get_redir_out(cmd);	//""     ""  ""     ""    ""  output.
 	operator opp = scommand_get_operator(cmd);	//operator que define tipo de pipe: opp={PIPELINE, DOBLE_AMPERSAND, NOTHING}
 	pid_t pid;									//Variable para almacenar procces id, ideal para fork.
+	printf("-------------%d-----------------\n", waiting);
 
-	/*
-	int errorpipe[2];							//Se crea el array de enteros, ideal para compartir el error entre procesos.
-    if (pipe(errorpipe) == -1) {				//Se usa pipe generando file
-		perror("pipe");							//descriptors en errorpipe para 
-    }											//transimitir info entre procesos.
-	*/
 
     if (opp == PIPELINE) {	//--------------------------------------------PIPELINE-------------------------------------
 		printf("PIPELINE\n");
 		int outinpipe[2];				//Se crea el array de enteros, ideal para el pipeline.
+		int status2;
+		pid_t pid2;
 		if (pipe(outinpipe) == -1) {	//Se usa pipe generando file
 			perror("pipe");				//descriptors en outinpipe para 
         }								//transimitir info entre procesos.
@@ -83,13 +80,16 @@ int command_run (scommand cmd, int fd, pipeline apipe) {
 
 	    if (pid == -1) {				//ERROR en la creacion del fork.
             perror("fork");
+			close(outinpipe[0]);								//Cerrar file descriptor no usado.    
+            close(outinpipe[1]);								//write file descriptor de la pipe.
 		} 
 		else if (pid == 0) {                        //Hijo-------------------------------------------------------------
 			close(outinpipe[0]);								//Cerrar file descriptor no usado.    
-		//	close(errorpipe[0]);								//Cerrar file descriptor no usado.    
 
 			if (fd > 1 && in==NULL) {							//Estos if's se encargan
         		dup2(fd, 0);									//de modificar el input
+				close(fd);
+				fd = 0;
     		} else if (fd == 0 && in!=NULL) {					//en caso de necesidad...
 				fd = open(in, O_RDONLY, S_IRWXU);				//...
         		dup2(fd, 0);									//...
@@ -112,18 +112,9 @@ int command_run (scommand cmd, int fd, pipeline apipe) {
             if (execvp(cmd_arg[0], cmd_arg) == -1) {			//Ejecutamos el comando.
                 error = -1;										//Entra el caso de error.
             }
-
-			free(cmd_arg);										//Liberamos memoria almacenada
-			cmd_arg = NULL;										//por command_to_array
-
-		/*
-			write(errorpipe[1], &error, sizeof(error)); 		//Escribimos el error de la ejecucion en el pipe.
-			close(errorpipe[1]);								//Cerramos el pipe recien usado.
-		*/
 		}
 		else if (pid > 0) {							//Papi-------------------------------------------------------------
             close(outinpipe[1]);								//Cerrar file descriptor no usado.
-         //   close(errorpipe[1]);								//Cerrar file descriptor no usado.
 
 			if (waiting) {
                 wait(&status);									//En caso de wait el padre espera al hijo.
@@ -131,14 +122,31 @@ int command_run (scommand cmd, int fd, pipeline apipe) {
 
             pipeline_pop_front(apipe);							//Eliminamos el comando ya ejecutado.
             cmd = pipeline_front(apipe);						//Agarramos el sig. para el pipe.
-            
-			command_run(cmd, outinpipe[0], apipe);				//Se llama el sig. comando con el read
-			close(outinpipe[0]);								//file descriptor de la pipe.
-	
-		/*
-			read(errorpipe[0], &error, sizeof(error)); 			//Leemos el error de la ejecucion.
-			close(errorpipe[0]); 								//Cerrar file descriptor.
-		*/
+
+			pid2 = fork();
+
+           	if (pid2 == -1) {
+				perror("fork");
+				close(outinpipe[0]);
+			}
+			else if (pid2 == 0) {
+				dup2(outinpipe[0],0);
+				close(outinpipe[0]);
+				if (out != NULL) {									//Este if se encarga de 
+        			int file_descriptor_out = open(out, O_CREAT|O_WRONLY|O_TRUNC, S_IWUSR);	//modificar el output, S_IRWXU se usa para que tenga permiso de escritura, lectura y ejecucion para el propietario
+					dup2(file_descriptor_out, 1);           		//en caso de necesidad.
+					close(file_descriptor_out);
+				}
+				cmd_arg = command_to_array(cmd);
+				execvp(cmd_arg[0], cmd_arg);
+				printf("Error gato\n");
+			}
+			else if (pid2 > 0) {
+				close(outinpipe[0]);
+				if (waiting) {
+					wait(&status2);
+				}
+			}
         }
 	} 
 	else if (opp == DOBLE_AMPERSAND || opp == NOTHING) { //------------------DOBLE_AMPERSAN || NOTHING---------------------------------
@@ -196,7 +204,6 @@ int command_run (scommand cmd, int fd, pipeline apipe) {
                 wait(&status);									//En caso de wait el padre espera al hijo.
             }
 
-            pipeline_pop_front(apipe);							//Limpiamos memoria 
 
 		/*
 			read(errorpipe[0], &error, sizeof(error)); 			//Leemos el error de la ejecucion.
@@ -232,6 +239,7 @@ void execute_pipeline(pipeline apipe){
         } else { //syscall
 			printf("El comando no es builtin---------------------------\n");
 			error = command_run(cmd, fdinput, apipe);
+            pipeline_pop_front(apipe);							//Limpiamos memoria 
         }
 		test++;
 		free(comand);
