@@ -150,7 +150,7 @@ int command_run (scommand cmd, int fd, pipeline apipe) {
 	    } 
 		else if (pid == 0) {                        //Hijo-------------------------------------------------------------
 		//	close(errorpipe[0]);								//Cerrar file descriptor no usado.    
-
+	printf("___________________EL FD ES: %d\n", fd);
 			if (fd > 1 && in==NULL) {							//Estos if's se encargan
         		dup2(fd, 0);									//de modificar el input
     		} else if (fd == 0 && in!=NULL) {					//en caso de necesidad...
@@ -162,10 +162,10 @@ int command_run (scommand cmd, int fd, pipeline apipe) {
 				printf ("Error: usas dos inputs para un mismo comando\n");
 				// Ver que hacer
 			}
-        
+			printf("_______%d_________\n", (out != NULL));
 			if (out != NULL) {									//Este if se encarga de 
-        		int file_descriptor_out = open(out, O_CREAT|O_WRONLY|O_TRUNC, S_IRWXU);	//modificar el output, S_IRWXU se usa para que tenga permiso de escritura, lectura y ejecucion para el propietario
-        		dup2(1, file_descriptor_out);           		//en caso de necesidad.
+        		int file_descriptor_out = open(out, O_CREAT|O_WRONLY|O_TRUNC, S_IWUSR);	//modificar el output, S_IRWXU se usa para que tenga permiso de escritura, lectura y ejecucion para el propietario
+        		dup2(file_descriptor_out, 1);           		//en caso de necesidad.
         		close(file_descriptor_out);
 			}
 
