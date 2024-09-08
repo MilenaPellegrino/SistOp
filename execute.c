@@ -164,7 +164,7 @@ int command_run (scommand cmd, int fd, pipeline apipe) {
 			}
         
 			if (out != NULL) {									//Este if se encarga de 
-        		int file_descriptor_out = open(out, O_CREAT|O_WRONLY|O_TRUNC, S_IRWXU);	//modificar el output
+        		int file_descriptor_out = open(out, O_CREAT|O_WRONLY|O_TRUNC, S_IRWXU);	//modificar el output, S_IRWXU se usa para que tenga permiso de escritura, lectura y ejecucion para el propietario
         		dup2(1, file_descriptor_out);           		//en caso de necesidad.
         		close(file_descriptor_out);
 			}
