@@ -64,11 +64,9 @@ int command_run (scommand cmd, int fd, pipeline apipe) {
     char *out = scommand_get_redir_out(cmd);	//""     ""  ""     ""    ""  output.
 	operator opp = scommand_get_operator(cmd);	//operator que define tipo de pipe: opp={PIPELINE, DOBLE_AMPERSAND, NOTHING}
 	pid_t pid;									//Variable para almacenar procces id, ideal para fork.
-	printf("-------------%d-----------------\n", waiting);
 
 
     if (opp == PIPELINE) {	//--------------------------------------------PIPELINE-------------------------------------
-		printf("PIPELINE\n");
 		int outinpipe[2];				//Se crea el array de enteros, ideal para el pipeline.
 		int status2;
 		pid_t pid2;
@@ -114,11 +112,8 @@ int command_run (scommand cmd, int fd, pipeline apipe) {
             }
 		}
 		else if (pid > 0) {							//Papi-------------------------------------------------------------
-            close(outinpipe[1]);								//Cerrar file descriptor no usado.
+            close(outinpipe[1]);						//Cerrar file descriptor no usado.
 
-			if (waiting) {
-                wait(&status);									//En caso de wait el padre espera al hijo.
-            }
 
             pipeline_pop_front(apipe);							//Eliminamos el comando ya ejecutado.
             cmd = pipeline_front(apipe);						//Agarramos el sig. para el pipe.
@@ -139,18 +134,19 @@ int command_run (scommand cmd, int fd, pipeline apipe) {
 				}
 				cmd_arg = command_to_array(cmd);
 				execvp(cmd_arg[0], cmd_arg);
-				printf("Error gato\n");
 			}
 			else if (pid2 > 0) {
 				close(outinpipe[0]);
 				if (waiting) {
 					wait(&status2);
 				}
+				if (waiting) {
+                	wait(&status);							//En caso de wait el padre espera al hijo.
+            	}
 			}
         }
 	} 
 	else if (opp == DOBLE_AMPERSAND || opp == NOTHING) { //------------------DOBLE_AMPERSAN || NOTHING---------------------------------
-		printf("DOBLE_AMPERSAND || NOTHING\n");
 		pid = fork();						//Inicia fork.
 	    
 		if (pid == -1) {					//ERROR en la creacion del fork.
@@ -158,7 +154,6 @@ int command_run (scommand cmd, int fd, pipeline apipe) {
 	    } 
 		else if (pid == 0) {                        //Hijo-------------------------------------------------------------
 		//	close(errorpipe[0]);								//Cerrar file descriptor no usado.    
-	printf("___________________EL FD ES: %d\n", fd);
 			if (fd > 1 && in==NULL) {							//Estos if's se encargan
         		dup2(fd, 0);									//de modificar el input
     		} else if (fd == 0 && in!=NULL) {					//en caso de necesidad...
@@ -170,7 +165,6 @@ int command_run (scommand cmd, int fd, pipeline apipe) {
 				printf ("Error: usas dos inputs para un mismo comando\n");
 				// Ver que hacer
 			}
-			printf("_______%d_________\n", (out != NULL));
 			if (out != NULL) {									//Este if se encarga de 
         		int file_descriptor_out = open(out, O_CREAT|O_WRONLY|O_TRUNC, S_IWUSR);	//modificar el output, S_IRWXU se usa para que tenga permiso de escritura, lectura y ejecucion para el propietario
         		dup2(file_descriptor_out, 1);           		//en caso de necesidad.
@@ -180,11 +174,9 @@ int command_run (scommand cmd, int fd, pipeline apipe) {
             cmd_arg = command_to_array(cmd);					//Tomamos el comando para ejecutar.
             if (execvp(cmd_arg[0], cmd_arg) == -1) {			//Ejecutamos el comando.
 				if (opp == DOBLE_AMPERSAND) {					//Si ocurre error en operator
-				printf("DOBLE_AMPERSAND\n");
                 error = 0;										//DOBLE_AMPERSAN setea error en 0.
 				} 												
 				else if (opp == NOTHING) {						//Si ocurre ERROR en operator
-				printf("NOTHING\n");
 				error = 1;										//NOTHING setea error en 1.
 				}
             }
@@ -216,7 +208,6 @@ int command_run (scommand cmd, int fd, pipeline apipe) {
 
 void execute_pipeline(pipeline apipe){
     assert(apipe != NULL);
-	printf("Empieza modulo execute_pipeline/-/-/-/-/-/-/-/-/-/-/-/-/-/-/-/-/-/-\n");
     scommand cmd;
 	int error=1;
 	int fdinput = 0;
@@ -227,17 +218,13 @@ void execute_pipeline(pipeline apipe){
         return;
     }
     while (pipeline_length(apipe)!=0 && error!=0) {
-		printf("Comienza iter nro %d\n", test);
         cmd = pipeline_front(apipe);
 		comand = scommand_to_string(cmd);
-		printf("Comando: '%s'\n", comand);
         builtin = builtin_is_internal(cmd);
         if (builtin){
-			printf("El comando es builtin---------------------------\n");
             builtin_run(cmd);
             pipeline_pop_front(apipe);							//Limpiamos memoria 
         } else { //syscall
-			printf("El comando no es builtin---------------------------\n");
 			error = command_run(cmd, fdinput, apipe);
             pipeline_pop_front(apipe);							//Limpiamos memoria 
         }
@@ -245,7 +232,5 @@ void execute_pipeline(pipeline apipe){
 		free(comand);
     }
 	if (error==0) {
-		printf("Error en ejecucion de comando con doble ampersand.\n");
 	}
-	printf("Termina modulo execute_pipeline/-/-/-/-/-/-/-/-/-/-/-/-/-/-/-/-/-/-\n");
 }
