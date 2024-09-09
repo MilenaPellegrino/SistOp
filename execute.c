@@ -138,11 +138,9 @@ int command_run (scommand cmd, int fd, pipeline apipe) {
 			else if (pid2 > 0) {
 				close(outinpipe[0]);
 				if (waiting) {
+                	wait(&status);							//En caso de wait el padre espera al hijo.
 					wait(&status2);
 				}
-				if (waiting) {
-                	wait(&status);							//En caso de wait el padre espera al hijo.
-            	}
 			}
         }
 	} 

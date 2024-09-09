@@ -117,7 +117,10 @@ char * scommand_to_string(const scommand self){
 	char *minor = " < ";
 	char *killme = NULL;
 	char *killme2 = NULL;
-	if (!g_queue_is_empty(self->scomman)) {
+	if (g_queue_is_empty(self->scomman)) {
+		result = malloc(sizeof(char));
+		result[0] = '\0';
+	} else {
 		GQueue *tmp = g_queue_copy(self->scomman);
 		gpointer aux = NULL;
 		aux = g_queue_pop_head(tmp);
@@ -128,8 +131,8 @@ char * scommand_to_string(const scommand self){
 			killme2 = result;
 			killme = strmerge(space, (char *)aux);
 			result = strmerge(result, killme);
-            g_free(killme);
-            g_free(killme2);
+            free(killme);
+            free(killme2);
 		}
         g_queue_free(tmp);
 	} if (self->out!=NULL) {
@@ -137,8 +140,8 @@ char * scommand_to_string(const scommand self){
 			killme = strmerge(mayor, self->out);
 			killme2 = result;
 			result = strmerge(result, killme);
-            g_free(killme);
-            g_free(killme2);
+            free(killme);
+            free(killme2);
 		} else {
 			result = strmerge(mayor, self->out);
 		}
@@ -147,15 +150,12 @@ char * scommand_to_string(const scommand self){
 			killme = strmerge(minor, self->in);
 			killme2 = result;
 			result = strmerge(result, killme);
-            g_free(killme);
-            g_free(killme2);
+            free(killme);
+            free(killme2);
 		} else {
 			result = strmerge(minor, self->in);
 		}
-	} else {
-		result = malloc(sizeof(char));
-		result[0] = '\0';
-	}
+	} 
     assert(scommand_get_redir_in(self)==NULL 
 		   || scommand_get_redir_out(self)==NULL 
 		   ||strlen(result)>0);
@@ -259,10 +259,11 @@ char * pipeline_to_string(const pipeline self){
 			else if (checker == DOBLE_AMPERSAND) {
 				killme2 = strmerge(d_amper, killme);	
 			}
+			free(killme);
             killme = result;
             result = strmerge(result, killme2);
-            g_free(killme);
-            g_free(killme2);
+            free(killme);
+            free(killme2);
 			killme=NULL;
 			killme2=NULL;
 		}
@@ -275,7 +276,7 @@ char * pipeline_to_string(const pipeline self){
 	if (!pipeline_get_wait(self)) {
 		killme = result;
 		result = strmerge(result,amper);
-		g_free(killme);
+		free(killme);
 		killme=NULL;
 	}
 	assert(pipeline_is_empty(self) || pipeline_get_wait(self) || strlen(result)>0);
