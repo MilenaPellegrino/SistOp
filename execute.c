@@ -17,28 +17,6 @@
 
 #define SIZE 128
 
-/*
-char *intern_comm[] = {
-    "ls",
-    "wc"
-};
-
-unsigned int comm_long  = sizeof(intern_comm) / sizeof(intern_comm[0]);
-bool is_command (const scommand cmd){
-    assert(cmd!=NULL);
-    bool is_command = false;
-    bool matches = true;
-    for(unsigned int i=0; i<comm_long && matches; i++){
-        char *comm_act = intern_comm[i];
-        if (strcmp(comm_act, scommand_front(cmd)) == 0){
-            is_command = true;
-            matches = false;
-        }
-    }
-    return is_command;
-}
-*/
-
 char **command_to_array (scommand command) {
 	assert (command != NULL);
 	char **result = malloc((scommand_length(command)+2)*sizeof(char *));
@@ -123,7 +101,7 @@ int command_run (scommand cmd, int fd, pipeline apipe) {
 					perror("fork");
 					close(outinpipe[0]);
 				}
-				else if (pid2 == 0) {
+				else if (pid2 == 0) {				//Hijo-------------------------------------------------------------
 					dup2(outinpipe[0],0);
 					close(outinpipe[0]);
 					out = scommand_get_redir_out(cmd);
@@ -155,7 +133,6 @@ int command_run (scommand cmd, int fd, pipeline apipe) {
             perror("fork");
 	    } 
 		else if (pid == 0) {                        //Hijo-------------------------------------------------------------
-		//	close(errorpipe[0]);								//Cerrar file descriptor no usado.    
 			if (fd > 1 && in==NULL) {							//Estos if's se encargan
         		dup2(fd, 0);									//de modificar el input
     		} else if (fd == 0 && in!=NULL) {					//en caso de necesidad...
@@ -197,23 +174,11 @@ int command_run (scommand cmd, int fd, pipeline apipe) {
 			free(cmd_arg);										//Liberamos memoria almacenada
 			cmd_arg = NULL;										//por command_to_array
 
-		/*
-			write(errorpipe[1], &error, sizeof(error)); 		//Escribimos el error de la ejecucion en el pipe.
-			close(errorpipe[1]);								//Cerramos el pipe recien usado.
-		*/
 	    } 
 		else if (pid > 0) {							//Papi-------------------------------------------------------------
-        //    close(errorpipe[1]);								//Cerrar file descriptor no usado.
-
 			if (waiting) {
                 wait(&status);									//En caso de wait el padre espera al hijo.
             }
-
-
-		/*
-			read(errorpipe[0], &error, sizeof(error)); 			//Leemos el error de la ejecucion.
-			close(errorpipe[0]); 								//Cerrar file descriptor.
-		*/
         }
     }
 	return error;
@@ -240,7 +205,7 @@ void execute_pipeline(pipeline apipe){
         } else { //syscall
 			error = command_run(cmd, fdinput, apipe);
 			if (!pipeline_is_empty(apipe)) {
-	            pipeline_pop_front(apipe);					//Limpiamos memoria 			
+	            pipeline_pop_front(apipe);						//Limpiamos memoria 			
 			}
         }
 		test++;
