@@ -1,7 +1,6 @@
 #include <check.h>
 #include <signal.h>
 #include <stdlib.h>
-#include <stdio.h>
 #include <assert.h>
 #include "test_execute.h"
 
@@ -264,6 +263,7 @@ START_TEST (test_pipe2_parent)
     EXIT_PROTECTED (
         execute_pipeline (test_pipe);
     );
+
     /* Creo un pipe para los dos hijos */
     ck_assert_msg (mock_counter_pipe==1, NULL);
     ck_assert_msg (mock_counter_open==0, NULL);

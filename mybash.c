@@ -14,6 +14,7 @@
 #define GREEN   "\033[32m"
 #define BLUE    "\033[34m"
 #define DEFAULT "\033[0m"
+
 static void show_prompt(void) {
     char *usr = getenv("USER"); // Obtengo el usuario del pc
     char cwd[1024];  // Tamano suficiente para que se pueda ver el string del directorio

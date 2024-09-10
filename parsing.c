@@ -38,7 +38,6 @@ pipeline parse_pipeline(Parser p) {
     scommand cmd = scommand_new();
     bool error = false, another_pipe=true, at_eof = false;
 	bool wait = false, garbage = false, aux1=false, aux2=false;
-	char * garb= NULL;
 	operator opp;
 	cmd = parse_scommand(p);
     error = (cmd==NULL);
@@ -65,11 +64,10 @@ pipeline parse_pipeline(Parser p) {
 	wait = aux1 && !aux2;
 	pipeline_set_wait(result, !wait);
 	parser_garbage(p,&garbage);
-	garb = parser_last_garbage(p);
 	if (garbage || pipeline_is_empty(result)) {
 		result = pipeline_destroy(result);
         result = NULL;
-        printf("Hay basura: %s\n", garb);
+        //printf("Hay basura: %s\n", garb);
 	}
     return result;
 }

@@ -50,13 +50,11 @@ static void check_argument (scommand cmd, const char *first) {
 
     assert (cmd != NULL);
     assert (first != NULL);
-
     /* Comprueba que el primer elemento en `cmd' sea `first', y lo saca */
-    ck_assert_msg (!scommand_is_empty (cmd), NULL);
+    ck_assert_msg (! scommand_is_empty (cmd), NULL);
     
     arg = scommand_front (cmd);
     ck_assert_msg (strcmp (arg, first) == 0, NULL);
-
     scommand_pop_front(cmd);
 }
 
@@ -90,10 +88,11 @@ END_TEST
  */
 START_TEST (test_consumes_until_newline)
 {
-
     char* after = NULL;
+
     init_parser("ls\n--------\n\n\n");
     output = parse_pipeline(parser);
+
     /* Consumió hasta el \n equivocado? */
     ck_assert_msg (!parser_at_eof(parser), NULL);
     arg_kind_t type=ARG_NORMAL;
@@ -118,7 +117,6 @@ END_TEST
  * para sacar nota "A" 
  */
 
-
 START_TEST (test_empty)
 {
     //scommand s = NULL;
@@ -126,6 +124,7 @@ START_TEST (test_empty)
     init_parser("\n");
     output = parse_pipeline(parser);
     ck_assert_msg (output==NULL, NULL);
+
     /* Esto debería generar un pipeline de un elemento, con un comando
      * vacío adentro FIXME: Me parece que no es cierto
      */

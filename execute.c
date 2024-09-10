@@ -24,7 +24,6 @@ char *intern_comm[] = {
 };
 
 unsigned int comm_long  = sizeof(intern_comm) / sizeof(intern_comm[0]);
-
 bool is_command (const scommand cmd){
     assert(cmd!=NULL);
     bool is_command = false;
