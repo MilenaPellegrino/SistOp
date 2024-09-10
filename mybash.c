@@ -22,7 +22,8 @@ static void show_prompt(void) {
     if(bf == NULL){
         printf ("Wolobash> ");  // o un exit, un error
     } else {
-        printf(GREEN "%s@%s:", usr, usr);  // Nombre de usuario en verde
+        printf(DEFAULT "%s@%s", usr, usr);  // Nombre de usuario en verde
+        printf(DEFAULT ":");
         printf(BLUE "~%s", cwd);  // Directorio actual en azul 
         printf("---Wolobash> ");  // Imprimir el prompt 
         printf(DEFAULT);

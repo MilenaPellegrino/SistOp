@@ -115,34 +115,39 @@ int command_run (scommand cmd, int fd, pipeline apipe) {
 
 
             pipeline_pop_front(apipe);							//Eliminamos el comando ya ejecutado.
-            cmd = pipeline_front(apipe);						//Agarramos el sig. para el pipe.
+			if (!pipeline_is_empty(apipe)) {
+            	cmd = pipeline_front(apipe);						//Agarramos el sig. para el pipe.
+				pid2 = fork();
 
-			pid2 = fork();
-
-           	if (pid2 == -1) {
-				perror("fork");
-				close(outinpipe[0]);
-			}
-			else if (pid2 == 0) {
-				dup2(outinpipe[0],0);
-				close(outinpipe[0]);
-				if (out != NULL) {									//Este if se encarga de 
-        			int file_descriptor_out = open(out, O_CREAT|O_WRONLY|O_TRUNC, S_IWUSR);	//modificar el output, S_IRWXU se usa para que tenga permiso de escritura, lectura y ejecucion para el propietario
-					dup2(file_descriptor_out, 1);           		//en caso de necesidad.
-					close(file_descriptor_out);
+				if (pid2 == -1) {
+					perror("fork");
+					close(outinpipe[0]);
 				}
-				cmd_arg = command_to_array(cmd);
-				execvp(cmd_arg[0], cmd_arg);
-			}
-			else if (pid2 > 0) {
-				close(outinpipe[0]);
-				if (waiting) {
-                	wait(&status);							//En caso de wait el padre espera al hijo.
-					wait(&status2);
+				else if (pid2 == 0) {
+					dup2(outinpipe[0],0);
+					close(outinpipe[0]);
+					out = scommand_get_redir_out(cmd);
+					if (out != NULL) {									//Este if se encarga de 
+						int file_descriptor_out = open(out, O_CREAT|O_WRONLY|O_TRUNC,
+														S_IRUSR|S_IWUSR|S_IRGRP|S_IROTH);	//modificar el output, S_IRWXU se usa para que tenga permiso de escritura, lectura y ejecucion para el propietario
+						dup2(file_descriptor_out, 1);           		//en caso de necesidad.
+						close(file_descriptor_out);
+					}
+					cmd_arg = command_to_array(cmd);
+					execvp(cmd_arg[0], cmd_arg);
 				}
+				else if (pid2 > 0) {
+					close(outinpipe[0]);
+					if (waiting) {
+						wait(&status);							//En caso de wait el padre espera al hijo.
+						wait(&status2);
+					}
+				}
+			} else {
+				printf("Comomando invalido negro\n");
 			}
-        }
-	} 
+		}
+	}
 	else if (opp == DOBLE_AMPERSAND || opp == NOTHING) { //------------------DOBLE_AMPERSAN || NOTHING---------------------------------
 		pid = fork();						//Inicia fork.
 	    
@@ -155,6 +160,10 @@ int command_run (scommand cmd, int fd, pipeline apipe) {
         		dup2(fd, 0);									//de modificar el input
     		} else if (fd == 0 && in!=NULL) {					//en caso de necesidad...
 				fd = open(in, O_RDONLY, S_IRWXU);				//...
+				if (fd == -1)
+				{
+					printf("ERROR\n");
+				}
         		dup2(fd, 0);									//...
 				close(fd);										//...
 				fd = 0;											//...
@@ -163,20 +172,27 @@ int command_run (scommand cmd, int fd, pipeline apipe) {
 				// Ver que hacer
 			}
 			if (out != NULL) {									//Este if se encarga de 
-        		int file_descriptor_out = open(out, O_CREAT|O_WRONLY|O_TRUNC, S_IWUSR);	//modificar el output, S_IRWXU se usa para que tenga permiso de escritura, lectura y ejecucion para el propietario
-        		dup2(file_descriptor_out, 1);           		//en caso de necesidad.
+        		int file_descriptor_out = open(out, O_CREAT|O_WRONLY|O_TRUNC,
+											   S_IRUSR|S_IWUSR|S_IRGRP|S_IROTH|S_IWGRP);	//modificar el output, S_IRWXU se usa para que tenga permiso de escritura, lectura y ejecucion para el propietario
+				if(file_descriptor_out == -1){
+        			switch(errno){
+            			default:
+                			printf("ERROR\n");
+                			return 0;
+					}
+				}
+    	    	dup2(file_descriptor_out, 1);           		//en caso de necesidad.	
         		close(file_descriptor_out);
 			}
-
-            cmd_arg = command_to_array(cmd);					//Tomamos el comando para ejecutar.
-            if (execvp(cmd_arg[0], cmd_arg) == -1) {			//Ejecutamos el comando.
+			cmd_arg = command_to_array(cmd);					//Tomamos el comando para ejecutar.
+			if (execvp(cmd_arg[0], cmd_arg) == -1) {			//Ejecutamos el comando.
 				if (opp == DOBLE_AMPERSAND) {					//Si ocurre error en operator
-                error = 0;										//DOBLE_AMPERSAN setea error en 0.
+				error = 0;										//DOBLE_AMPERSAN setea error en 0.
 				} 												
 				else if (opp == NOTHING) {						//Si ocurre ERROR en operator
 				error = 1;										//NOTHING setea error en 1.
 				}
-            }
+			}
 
 			free(cmd_arg);										//Liberamos memoria almacenada
 			cmd_arg = NULL;										//por command_to_array
@@ -223,7 +239,9 @@ void execute_pipeline(pipeline apipe){
             pipeline_pop_front(apipe);							//Limpiamos memoria 
         } else { //syscall
 			error = command_run(cmd, fdinput, apipe);
-            pipeline_pop_front(apipe);							//Limpiamos memoria 
+			if (!pipeline_is_empty(apipe)) {
+	            pipeline_pop_front(apipe);					//Limpiamos memoria 			
+			}
         }
 		test++;
 		free(comand);

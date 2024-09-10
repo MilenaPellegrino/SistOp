@@ -121,6 +121,7 @@ void  run_help(scommand cmd){
 }
 
 void run_exit(scommand cmd){
+    printf("\n");
     exit(0);  // Termina el programa
 }
 
