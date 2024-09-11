@@ -8,9 +8,9 @@ debe tener las siguientes funcionalidades generales:
 ## Integrantes
 
 - **Madero Ismael**
-- **Castillo Agustin**: Pruebas de command.c
-- **Gonzalez Juan Pablo**: Pruebas de parsing.c
-- **Pellegrino Milena**: Pruebas para todos los módulos juntos
+- **Castillo Agustin**
+- **Gonzalez Juan Pablo**
+- **Pellegrino Milena**
 
 ## Requisitos
 
