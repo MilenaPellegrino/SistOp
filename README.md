@@ -2,8 +2,7 @@
 
 ## Laboratorio 1: MyBash
 
-EL proyecto se basa en codificar un shell al estilo de bash (Bourne Again SHell) al que llamaremos mybash. El programa
-debe tener las siguientes funcionalidades generales: 
+EL proyecto se basa en codificar un shell al estilo de bash (Bourne Again SHell).
 
 ## Integrantes
 
